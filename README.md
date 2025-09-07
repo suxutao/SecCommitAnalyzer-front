@@ -1,4 +1,4 @@
-# openharmony-analyzer-front
+# SecCommitAnalyzer-front
 
 SecCommitAnalyzer：基于补丁差异的安全提交识别系统的前端代码
 
