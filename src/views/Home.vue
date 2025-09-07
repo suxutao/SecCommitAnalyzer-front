@@ -1,0 +1,533 @@
+<script setup>
+import { ref } from 'vue'
+import SimplePieChart from '../components/PieChart.vue'
+import LineChart from '../components/LineChart.vue'
+import {Search} from '@element-plus/icons-vue'
+
+// 统计数据
+const stats = ref({
+    totalScans: 128,
+    securityRate: 96,
+    vulnerabilities: 5,
+    potentialRisks: 12
+})
+
+// 扫描活动数据
+const scanActivities = ref([
+    { id: '001', repo: 'frontend-web-app', branch: 'main', status: '完成', date: '2023-10-15 14:32' },
+    { id: '002', repo: 'backend-api', branch: 'dev', status: '完成', date: '2023-10-15 13:15' },
+    { id: '003', repo: 'mobile-app', branch: 'feature/auth', status: '进行中', date: '2023-10-15 12:42' },
+    { id: '004', repo: 'documentation', branch: 'main', status: '失败', date: '2023-10-15 11:28' },
+    { id: '005', repo: 'frontend-web-app', branch: 'release', status: '完成', date: '2023-10-15 10:15' }
+])
+
+// 漏洞类型分布
+const vulnerabilityDistribution = ref([
+    { type: 'XSS', count: 12, color: '#ef4444' },
+    { type: 'SQL注入', count: 8, color: '#f97316' },
+    { type: 'CSRF', count: 5, color: '#eab308' },
+    { type: '认证绕过', count: 3, color: '#84cc16' },
+    { type: '其他', count: 7, color: '#64748b' }
+])
+
+//扫描数据
+const scanData = ref([
+    { date: '10-01', scans: 10 },
+    { date: '10-02', scans: 15 },
+    { date: '10-03', scans: 8 },
+    { date: '10-04', scans: 20 },
+    { date: '10-05', scans: 12 },
+    { date: '10-06', scans: 18 },
+    { date: '10-07', scans: 25 }
+])
+
+// 处理新建扫描
+const handleNewScan = () => {
+    console.log('开始新的安全扫描')
+    // 实际项目中这里会调用API
+}
+</script>
+
+<template>
+    <div class="dashboard-header">
+        <div>
+            <h1 class="welcome-title">安全提交分析控制台</h1>
+            <p class="welcome-subtitle">监控和分析代码提交中的安全漏洞和潜在风险</p>
+        </div>
+        <el-button type="success" @click="handleNewScan">
+            <el-icon>
+                <Search />
+            </el-icon>
+            新建扫描
+        </el-button>
+    </div>
+
+    <!-- 统计卡片 -->
+    <div class="stats-container">
+        <el-card class="stat-card">
+            <div class="stat-content">
+                <div class="stat-icon">
+                    <i class="fas fa-code-branch"></i>
+                </div>
+                <div class="stat-data">
+                    <div class="stat-number">{{ stats.totalScans }}</div>
+                    <div class="stat-title">今日扫描提交</div>
+                </div>
+            </div>
+        </el-card>
+
+        <el-card class="stat-card">
+            <div class="stat-content">
+                <div class="stat-icon" style="color: #10b981;">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <div class="stat-data">
+                    <div class="stat-number">{{ stats.securityRate }}%</div>
+                    <div class="stat-title">安全提交率</div>
+                </div>
+            </div>
+        </el-card>
+
+        <el-card class="stat-card">
+            <div class="stat-content">
+                <div class="stat-icon" style="color: #ef4444;">
+                    <i class="fas fa-bug"></i>
+                </div>
+                <div class="stat-data">
+                    <div class="stat-number">{{ stats.vulnerabilities }}</div>
+                    <div class="stat-title">发现漏洞</div>
+                </div>
+            </div>
+        </el-card>
+
+        <el-card class="stat-card">
+            <div class="stat-content">
+                <div class="stat-icon" style="color: #f59e0b;">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="stat-data">
+                    <div class="stat-number">{{ stats.potentialRisks }}</div>
+                    <div class="stat-title">潜在风险</div>
+                </div>
+            </div>
+        </el-card>
+    </div>
+
+    <!-- 图表区域 -->
+    <div class="charts-container">
+        <el-card class="chart-card">
+            <template #header>
+                <div class="chart-header">
+                    <span>漏洞类型分布</span>
+                </div>
+            </template>
+            <div class="chart-content">
+                <div class="vulnerability-list">
+                    <div v-for="(item, index) in vulnerabilityDistribution" :key="index" class="vulnerability-item">
+                        <div class="vuln-type">
+                            <div class="color-indicator" :style="{ backgroundColor: item.color }"></div>
+                            <span>{{ item.type }}</span>
+                        </div>
+                        <div class="vuln-count">{{ item.count }}个</div>
+                    </div>
+                </div>
+                <div class="chart-placeholder">
+                    <i class="fas fa-chart-pie"></i>
+                    <SimplePieChart :chart-data="vulnerabilityDistribution" />
+                </div>
+            </div>
+        </el-card>
+
+        <el-card class="chart-card">
+            <template #header>
+                <div class="chart-header">
+                    <span>扫描数量图</span>
+                </div>
+            </template>
+            <div class="chart-placeholder">
+                <i class="fas fa-chart-line"></i>
+                <LineChart :data="scanData"/>
+            </div>
+        </el-card>
+    </div>
+
+    <!-- 最近扫描活动 -->
+    <el-card class="activity-card">
+        <template #header>
+            <div class="activity-header">
+                <span>最近扫描活动</span>
+                <el-button type="primary" text>查看全部</el-button>
+            </div>
+        </template>
+        <el-table :data="scanActivities" class="dark-table" style="width: 80%; margin: auto; margin-top: 16px;">
+            <el-table-column prop="id" label="ID" width="80" />
+            <el-table-column prop="repo" label="仓库" />
+            <el-table-column prop="branch" label="分支" width="120" />
+            <el-table-column prop="status" label="状态" width="100">
+                <template #default="scope">
+                    <el-tag
+                        :type="scope.row.status === '完成' ? 'success' : scope.row.status === '进行中' ? 'warning' : 'danger'"
+                        size="big">
+                        {{ scope.row.status }}
+                    </el-tag>
+                </template>
+            </el-table-column>
+            <el-table-column prop="date" label="日期" width="140" />
+            <el-table-column label="操作" width="80">
+                <template #default>
+                    <el-button size="small" type="primary">详情</el-button>
+                </template>
+            </el-table-column>
+        </el-table>
+    </el-card>
+</template>
+
+<style lang="scss" scoped>
+.app-container {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+}
+
+.el-header {
+    background: linear-gradient(90deg, #1e40af 0%, #3b82f6 100%);
+    color: white;
+    padding: 0;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    height: 64px;
+
+    .header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        height: 100%;
+        padding: 0 24px;
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+
+            i {
+                margin-right: 12px;
+                color: #10b981;
+                font-size: 1.8rem;
+            }
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+
+            .user-name {
+                font-weight: 500;
+                margin-right: 8px;
+            }
+        }
+    }
+}
+
+.el-container {
+    min-height: calc(100vh - 64px);
+}
+
+.el-aside {
+    background-color: #1e293b;
+    border-right: 1px solid #334155;
+
+    .side-menu {
+        border-right: none;
+        padding: 16px 8px;
+
+        .el-menu-item {
+            height: 48px;
+            margin: 4px 0;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+
+            &:hover {
+                background-color: #334155 !important;
+            }
+
+            &.is-active {
+                background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%) !important;
+                color: #fff !important;
+                font-weight: 500;
+            }
+        }
+
+        .el-sub-menu {
+            .el-sub-menu__title {
+                height: 48px;
+                margin: 4px 0;
+                border-radius: 8px;
+
+                &:hover {
+                    background-color: #334155 !important;
+                }
+            }
+
+            .el-menu-item {
+                padding-left: 56px !important;
+            }
+        }
+
+        .badge {
+            margin-left: 8px;
+        }
+    }
+}
+
+.el-main {
+    padding: 24px;
+    background-color: #0f172a;
+
+    .main-content {
+        background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        min-height: calc(100vh - 112px);
+        border: 1px solid #334155;
+    }
+}
+
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+
+    .welcome-title {
+        font-size: 1.8rem;
+        font-weight: 600;
+        color: #e2e8f0;
+        margin-bottom: 8px;
+    }
+
+    .welcome-subtitle {
+        font-size: 1rem;
+        color: #94a3b8;
+    }
+}
+
+.stats-container {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+
+    .stat-card {
+        background: linear-gradient(135deg, #334155 0%, #475569 100%);
+        border: 1px solid #475569;
+
+        :deep(.el-card__body) {
+            padding: 20px;
+        }
+
+        .stat-content {
+            display: flex;
+            align-items: center;
+        }
+
+        .stat-icon {
+            font-size: 2.5rem;
+            margin-right: 16px;
+            color: #60a5fa;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #3b82f6;
+            margin-bottom: 4px;
+        }
+
+        .stat-title {
+            font-size: 0.9rem;
+            color: #94a3b8;
+        }
+    }
+
+    :deep(.stat-card:hover) {
+        transform: translateY(-3px) scale(0.99);
+        /* 向上位移3px + 轻微缩放 */
+        box-shadow: 0 4px 12px rgba(56, 103, 173, 0.87);
+        /* 加深阴影增强立体感 */
+    }
+}
+
+.charts-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+
+    .chart-card {
+        background: linear-gradient(135deg, #334155 0%, #475569 100%);
+        border: 1px solid #475569;
+
+        .chart-header {
+            color: #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chart-content {
+            display: flex;
+            height: 200px;
+        }
+
+        .vulnerability-list {
+            flex: 1;
+            padding-right: 16px;
+            color: #e2e8f0;
+        }
+
+        .vulnerability-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #475569;
+
+            &:last-child {
+                border-bottom: none;
+            }
+
+            .vuln-type {
+                display: flex;
+                align-items: center;
+
+                .color-indicator {
+                    width: 12px;
+                    height: 12px;
+                    border-radius: 50%;
+                    margin-right: 8px;
+                }
+            }
+        }
+
+        .chart-placeholder {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #64748b;
+
+            i {
+                font-size: 3rem;
+                margin-bottom: 12px;
+            }
+        }
+    }
+}
+
+.activity-card {
+    background: linear-gradient(135deg, #334155 0%, #475569 100%);
+    border: 1px solid #475569;
+
+    .activity-header {
+        color: #e2e8f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+}
+
+// 深色主题表格样式
+:deep(.dark-table) {
+    --el-table-border-color: #475569;
+    --el-table-border: 1px solid var(--el-table-border-color);
+    --el-table-text-color: #e2e8f0;
+    --el-table-header-text-color: #94a3b8;
+    --el-table-row-hover-background-color: #495e7c;
+    --el-table-current-row-background-color: #4ca9f565;
+    --el-table-header-background-color: #1e293b;
+    --el-table-fixed-box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+    --el-table-background-color: #1e293b;
+    --el-table-tr-background-color: #2c4061;
+
+    .el-table__header {
+        th {
+            background-color: var(--el-table-header-background-color);
+            color: var(--el-table-header-text-color);
+            font-weight: 600;
+        }
+    }
+
+    .el-table__body {
+        tr {
+            background-color: var(--el-table-tr-background-color);
+            color: var(--el-table-text-color);
+
+            &:hover {
+                >td {
+                    background-color: var(--el-table-row-hover-background-color);
+                }
+            }
+        }
+
+        td {
+            border-bottom: var(--el-table-border);
+        }
+    }
+
+    .el-table__empty-block {
+        background-color: var(--el-table-background-color);
+        color: var(--el-table-text-color);
+    }
+
+    // 分页器样式（如果使用）
+    .el-pagination {
+        --el-pagination-background-color: #1e293b;
+        --el-pagination-button-color: #e2e8f0;
+        --el-pagination-button-disabled-color: #64748b;
+        --el-pagination-hover-color: #3b82f5;
+    }
+}
+
+// 响应式设计
+@media (max-width: 1200px) {
+    .stats-container {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .charts-container {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .stats-container {
+        grid-template-columns: 1fr;
+    }
+
+    .el-aside {
+        width: 64px !important;
+
+        .el-sub-menu__title span,
+        .el-menu-item span {
+            display: none;
+        }
+    }
+
+    .header-content {
+        .logo span {
+            display: none;
+        }
+
+        .user-info .user-name {
+            display: none;
+        }
+    }
+}
+</style>

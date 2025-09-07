@@ -1,0 +1,7 @@
+/* 全局覆盖 Element 的 CSS 变量 */
+:root {
+  --el-bg-color-overlay: #1e293b !important;
+  --el-disabled-bg-color: #1e293b !important;
+  --el-input-bg-color:#334155 !important;
+  --el-fill-color-blank: #334155 !important;
+}
