@@ -5,18 +5,9 @@
     <!-- 页面标题和操作 -->
     <div class="page-header">
         <div>
-            <h1 class="page-title">提交历史分析</h1>
+            <h1 class="page-title">提交记录详细分析</h1>
             <p class="page-subtitle">代码提交安全扫描结果与详细分析</p>
         </div>
-        <!-- <div class="header-actions">
-            <el-input placeholder="搜索提交记录..." prefix-icon="Search" style="width: 250px; margin-right: 12px;" />
-            <el-button type="primary">
-                <el-icon>
-                    <Search />
-                </el-icon>
-                重新扫描
-            </el-button>
-        </div> -->
     </div>
 
     <!-- 提交历史表格 -->
@@ -24,14 +15,14 @@
         <template #header>
             <div class="card-header">
                 <span>最近提交记录</span>
-                <div>
+                <!-- <div>
                     <el-select placeholder="所有分支" v-model="selectedBranch" style="width: 150px;" class="dark-select">
                         <el-option label="所有分支" value="all" />
                         <el-option label="main" value="main" />
                         <el-option label="dev" value="dev" />
                         <el-option label="release" value="release" />
                     </el-select>
-                </div>
+                </div> -->
             </div>
         </template>
 
@@ -110,7 +101,7 @@
 
         <!-- 分页控件 -->
         <div class="pagination-container">
-            <el-pagination :page-size="5" :total="25" layout="total, prev, pager, next, jumper" 
+            <el-pagination :page-size="10" :total="25" layout="total, prev, pager, next, jumper" 
                 background class="dark-pagination" />
         </div>
     </el-card>
