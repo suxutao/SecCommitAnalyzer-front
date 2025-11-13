@@ -1,9 +1,45 @@
 <script setup>
+import { watch } from 'vue'
 import { Check, Close } from '@element-plus/icons-vue'
 import { useSpiderStore } from '../stores/spider'
+import { useIntervalFn } from '@vueuse/core'
+import { crawl } from '@/api/data'
 
 // 初始化spider store
 const spiderStore = useSpiderStore()
+
+const pa = async () => {
+  console.log(spiderStore.selectedTimeInterval);
+  
+  // await crawl({
+  //   timeInterval: spiderStore.selectedTimeInterval.value,
+  //   recordCount: spiderStore.selectedRecordCount.value
+  // })
+}
+
+const { pause, resume, isActive } = useIntervalFn(
+  pa,
+  () => spiderStore.selectedTimeInterval * 1000,
+  {
+    immediate: false,
+    immediateCallback: true
+  }
+);
+
+watch(
+  () => spiderStore.isRunning,
+  (newVal) => {
+    if (newVal) {
+      resume(); // 使用 resume 而不是 start
+    } else {
+      pause();  // 使用 pause 而不是 stop
+    }
+  },
+  {
+    immediate: true
+  }
+);
+
 
 // 时间间隔选项
 const timeIntervalOptions = [
@@ -49,40 +85,23 @@ const stopSpider = () => spiderStore.stopSpider()
           <span>爬虫参数设置</span>
         </div>
       </template>
-      
+
       <div class="config-form">
         <div class="form-item">
           <el-form-item label="爬取时间间隔">
-            <el-select 
-              v-model="spiderStore.selectedTimeInterval" 
-              class="select-width"
-              placeholder="选择时间间隔"
-                :disabled="spiderStore.isRunning"
-            >
-              <el-option 
-                v-for="item in timeIntervalOptions" 
-                :key="item.value" 
-                :label="item.label" 
-                :value="item.value"
-              />
+            <el-select v-model="spiderStore.selectedTimeInterval" class="select-width" placeholder="选择时间间隔"
+              :disabled="spiderStore.isRunning">
+              <el-option v-for="item in timeIntervalOptions" :key="item.value" :label="item.label"
+                :value="item.value" />
             </el-select>
           </el-form-item>
         </div>
-        
+
         <div class="form-item">
           <el-form-item label="每次爬取条数">
-            <el-select 
-              v-model="spiderStore.selectedRecordCount" 
-              class="select-width"
-              placeholder="选择爬取条数"
-                :disabled="spiderStore.isRunning"
-            >
-              <el-option 
-                v-for="item in recordCountOptions" 
-                :key="item.value" 
-                :label="item.label" 
-                :value="item.value"
-              />
+            <el-select v-model="spiderStore.selectedRecordCount" class="select-width" placeholder="选择爬取条数"
+              :disabled="spiderStore.isRunning">
+              <el-option v-for="item in recordCountOptions" :key="item.value" :label="item.label" :value="item.value" />
             </el-select>
             <span class="unit-label">条/次</span>
           </el-form-item>
@@ -92,23 +111,11 @@ const stopSpider = () => spiderStore.stopSpider()
 
     <!-- 操作按钮区域 -->
     <div class="action-buttons">
-      <el-button 
-        type="success" 
-        :icon="Check" 
-        size="large"
-        :disabled="spiderStore.isRunning"
-        @click="startSpider"
-      >
+      <el-button type="success" :icon="Check" size="large" :disabled="spiderStore.isRunning" @click="startSpider">
         开始爬虫
       </el-button>
-      
-      <el-button 
-        type="danger" 
-        :icon="Close" 
-        size="large"
-        :disabled="!spiderStore.isRunning"
-        @click="stopSpider"
-      >
+
+      <el-button type="danger" :icon="Close" size="large" :disabled="!spiderStore.isRunning" @click="stopSpider">
         停止爬虫
       </el-button>
     </div>
@@ -120,7 +127,7 @@ const stopSpider = () => spiderStore.stopSpider()
           <span>爬虫状态</span>
         </div>
       </template>
-      
+
       <div class="status-content">
         <div class="status-item">
           <span class="status-label">运行状态：</span>
@@ -128,7 +135,7 @@ const stopSpider = () => spiderStore.stopSpider()
             {{ spiderStore.isRunning ? '运行中' : '已停止' }}
           </el-tag>
         </div>
-        
+
         <div class="status-item">
           <span class="status-label">设置参数：</span>
           <div class="status-details">
@@ -216,7 +223,7 @@ const stopSpider = () => spiderStore.stopSpider()
     display: flex;
     gap: 16px;
     margin-bottom: 24px;
-    
+
     .el-button {
       padding: 12px 32px;
       font-size: 1.1rem;
@@ -272,37 +279,41 @@ const stopSpider = () => spiderStore.stopSpider()
 }
 
 :deep(.el-select) {
-    --el-fill-color-blank: #243042;
-    --el-bg-color-overlay: #1e293b;
+  --el-fill-color-blank: #243042;
+  --el-bg-color-overlay: #1e293b;
 
-    --el-text-color-primary: #E8F3FF;
-    --el-text-color-regular: #CFE3FF;
-    --el-text-color-secondary: #A6CDFF;
-    --el-text-color-placeholder: #7EB8FF;
+  --el-text-color-primary: #E8F3FF;
+  --el-text-color-regular: #CFE3FF;
+  --el-text-color-secondary: #A6CDFF;
+  --el-text-color-placeholder: #7EB8FF;
 
-    /* 边框颜色 */
-    --el-border-color: #4A5568;
-    --el-border-color-light: #4A5568;
-    --el-border-color-lighter: #4A5568;
-    --el-border-color-extra-light: #4A5568;
+  /* 边框颜色 */
+  --el-border-color: #4A5568;
+  --el-border-color-light: #4A5568;
+  --el-border-color-lighter: #4A5568;
+  --el-border-color-extra-light: #4A5568;
 
-    /* 下拉面板 */
-    --el-bg-color: #2D3748;
-    --el-bg-color-overlay: #081e44;
+  /* 下拉面板 */
+  --el-bg-color: #2D3748;
+  --el-bg-color-overlay: #081e44;
 
-    /* 选项悬停/选中状态 */
-    --el-color-primary-light-9: rgba(8, 14, 24, 0.16);
-    --el-fill-color-light: rgba(255, 255, 255, 0.12);
+  /* 选项悬停/选中状态 */
+  --el-color-primary-light-9: rgba(8, 14, 24, 0.16);
+  --el-fill-color-light: rgba(255, 255, 255, 0.12);
 
 }
 
 /* 1. 下拉框触发按钮（深色） */
 .el-select .el-input__inner {
-  background-color: #1f2937; /* 深色背景，可按需调整 */
-  border-color: #4b5563;     /* 边框颜色 */
-  color: #f3f4f6;            /* 文字颜色（浅色） */
+  background-color: #1f2937;
+  /* 深色背景，可按需调整 */
+  border-color: #4b5563;
+  /* 边框颜色 */
+  color: #f3f4f6;
+  /* 文字颜色（浅色） */
   --el-bg-color-overlay: #1e293b;
 }
+
 /* 触发按钮 hover/focus 状态 */
 .el-select .el-input__inner:hover,
 .el-select .el-input__inner:focus {
@@ -311,26 +322,35 @@ const stopSpider = () => spiderStore.stopSpider()
 }
 
 /* 2. 下拉面板（深色） */
-:deep(.el-select-dropdown ){
-  background-color: #1f2937; /* 与按钮背景一致 */
-  border-color: #4b5563;     /* 面板边框 */
+:deep(.el-select-dropdown) {
+  background-color: #1f2937;
+  /* 与按钮背景一致 */
+  border-color: #4b5563;
+  /* 面板边框 */
   --el-bg-color-overlay: #1e293b;
 }
+
 /* 下拉选项样式 */
 .el-select-dropdown__item {
-background-color: #1f2937;
-  color: #f3f4f6; /* 选项文字浅色 */
+  background-color: #1f2937;
+  color: #f3f4f6;
+  /* 选项文字浅色 */
   --el-bg-color-overlay: #1e293b;
 }
+
 /* 选项 hover/选中状态 */
 .el-select-dropdown__item:hover,
 .el-select-dropdown__item.selected {
-  background-color: #374151; /* hover/选中背景色 */
-  color: #ffffff;            /* 文字高亮 */
+  background-color: #374151;
+  /* hover/选中背景色 */
+  color: #ffffff;
+  /* 文字高亮 */
 }
+
 /* 下拉面板底部空白区域（如需统一深色） */
 .el-select-dropdown__empty {
-  color: #000000; /* 空选项文字色 */
+  color: #000000;
+  /* 空选项文字色 */
 }
 
 
@@ -339,7 +359,7 @@ background-color: #1f2937;
   .spider-container {
     .config-form {
       flex-direction: column;
-      
+
       .form-item {
         min-width: 100%;
       }
@@ -347,7 +367,7 @@ background-color: #1f2937;
 
     .action-buttons {
       flex-direction: column;
-      
+
       .el-button {
         width: 100%;
       }

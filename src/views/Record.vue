@@ -90,10 +90,13 @@
             </el-table-column>
 
             <!-- 操作列 -->
-            <el-table-column label="操作" width="100" align="center">
+            <el-table-column label="操作" width="200" align="center">
                 <template #default="scope">
-                    <el-button size="medium" type="primary" @click="viewCommitDetails(scope.row)" class="detail-btn">
+                    <el-button size="medium" type="primary" @click="viewCommitDetails(scope.row)">
                         详情
+                    </el-button>
+                    <el-button size="medium" type="success" @click="viewCommitDetails(scope.row)">
+                        分析
                     </el-button>
                 </template>
             </el-table-column>
@@ -101,14 +104,14 @@
 
         <!-- 分页控件 -->
         <div class="pagination-container">
-            <el-pagination :page-size="10" :total="25" layout="total, prev, pager, next, jumper" 
-                background class="dark-pagination" />
+            <el-pagination :page-size="10" :total="25" layout="total, prev, pager, next, jumper" background
+                class="dark-pagination" />
         </div>
     </el-card>
 </template>
 
 <script setup>
-import { ref,nextTick } from 'vue'
+import { ref, nextTick } from 'vue'
 import Detail from './Detail.vue'
 
 // 选择的分支
@@ -166,7 +169,7 @@ const commitHistory = ref([
 // 查看提交详情
 const dialogVisible = ref(false)
 const ObjectData = ref({})
-const viewCommitDetails = async(commit) => {
+const viewCommitDetails = async (commit) => {
     console.log('查看提交详情:', commit)
     dialogVisible.value = true
     await nextTick()
@@ -248,39 +251,52 @@ const viewCommitDetails = async(commit) => {
 
 /* 1. 下拉框触发按钮（深色） */
 .el-select .el-input__inner {
-  background-color: #1f2937; /* 深色背景，可按需调整 */
-  border-color: #4b5563;     /* 边框颜色 */
-  color: #f3f4f6;            /* 文字颜色（浅色） */
-  --el-bg-color-overlay: #1e293b;
+    background-color: #1f2937;
+    /* 深色背景，可按需调整 */
+    border-color: #4b5563;
+    /* 边框颜色 */
+    color: #f3f4f6;
+    /* 文字颜色（浅色） */
+    --el-bg-color-overlay: #1e293b;
 }
+
 /* 触发按钮 hover/focus 状态 */
 .el-select .el-input__inner:hover,
 .el-select .el-input__inner:focus {
-  border-color: #9ca3af;
-  --el-bg-color-overlay: #1e293b;
+    border-color: #9ca3af;
+    --el-bg-color-overlay: #1e293b;
 }
 
 /* 2. 下拉面板（深色） */
-:deep(.el-select-dropdown ){
-  background-color: #1f2937; /* 与按钮背景一致 */
-  border-color: #4b5563;     /* 面板边框 */
-  --el-bg-color-overlay: #1e293b;
+:deep(.el-select-dropdown) {
+    background-color: #1f2937;
+    /* 与按钮背景一致 */
+    border-color: #4b5563;
+    /* 面板边框 */
+    --el-bg-color-overlay: #1e293b;
 }
+
 /* 下拉选项样式 */
 .el-select-dropdown__item {
-background-color: #1f2937;
-  color: #f3f4f6; /* 选项文字浅色 */
-  --el-bg-color-overlay: #1e293b;
+    background-color: #1f2937;
+    color: #f3f4f6;
+    /* 选项文字浅色 */
+    --el-bg-color-overlay: #1e293b;
 }
+
 /* 选项 hover/选中状态 */
 .el-select-dropdown__item:hover,
 .el-select-dropdown__item.selected {
-  background-color: #374151; /* hover/选中背景色 */
-  color: #ffffff;            /* 文字高亮 */
+    background-color: #374151;
+    /* hover/选中背景色 */
+    color: #ffffff;
+    /* 文字高亮 */
 }
+
 /* 下拉面板底部空白区域（如需统一深色） */
 .el-select-dropdown__empty {
-  color: #000000; /* 空选项文字色 */
+    color: #000000;
+    /* 空选项文字色 */
 }
 
 

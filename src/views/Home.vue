@@ -1,16 +1,22 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
 import SimplePieChart from '../components/PieChart.vue'
 import LineChart from '../components/LineChart.vue'
-import {Search} from '@element-plus/icons-vue'
+import { Search } from '@element-plus/icons-vue'
+import { useRouter } from 'vue-router';
+import { ElMessage } from 'element-plus'
+import { useStats } from '../stores/useStats.js'
+
+// 获取路由实例
+const router = useRouter();
+
+// 定义跳转函数：通过路由实例跳转到/record
+const goToRecord = () => {
+    router.push('/record'); // 编程式导航，跳转到目标路由
+};
 
 // 统计数据
-const stats = ref({
-    totalScans: 128,
-    securityRate: 96,
-    vulnerabilities: 5,
-    potentialRisks: 12
-})
+const stats = useStats();
 
 // 扫描活动数据
 const scanActivities = ref([
@@ -21,13 +27,15 @@ const scanActivities = ref([
     { id: '005', repo: 'frontend-web-app', branch: 'release', status: '完成', date: '2023-10-15 10:15' }
 ])
 
+
+
 // 漏洞类型分布
 const vulnerabilityDistribution = ref([
-    { type: 'XSS', count: 12, color: '#ef4444' },
-    { type: 'SQL注入', count: 8, color: '#f97316' },
-    { type: 'CSRF', count: 5, color: '#eab308' },
-    { type: '认证绕过', count: 3, color: '#84cc16' },
-    { type: '其他', count: 7, color: '#64748b' }
+    { type: '缓冲区溢出', count: 12, color: '#ef4444' },
+    { type: '空指针', count: 8, color: '#f97316' },
+    { type: '整数溢出', count: 5, color: '#eab308' },
+    { type: '死锁', count: 3, color: '#84cc16' },
+    { type: '其他', count: stats.value.qita, color: '#64748b' }
 ])
 
 //扫描数据
@@ -41,11 +49,33 @@ const scanData = ref([
     { date: '10-07', scans: 25 }
 ])
 
-// 处理新建扫描
-const handleNewScan = () => {
-    console.log('开始新的安全扫描')
-    // 实际项目中这里会调用API
-}
+
+// 生成过去7天的日期（格式：MM-DD）
+const generatePast7Days = () => {
+    const today = new Date();
+    const past7Days = [];
+    // 从6天前循环到今天（共7天）
+    for (let i = 7; i > 0; i--) {
+        const targetDate = new Date(today);
+        targetDate.setDate(today.getDate() - i); // 计算i天前的日期
+
+        // 月份和日期补零（确保格式为两位，如：01-05）
+        const month = String(targetDate.getMonth() + 1).padStart(2, '0');
+        const day = String(targetDate.getDate()).padStart(2, '0');
+
+        past7Days.push(`${month}-${day}`);
+    }
+    return past7Days;
+};
+
+// 更新scanData中的date为过去7天
+onMounted(() => {
+    const past7Days = generatePast7Days();
+    // 遍历scanData，替换每个对象的date
+    scanData.value.forEach((item, index) => {
+        item.date = past7Days[index];
+    });
+});
 </script>
 
 <template>
@@ -71,7 +101,7 @@ const handleNewScan = () => {
                 </div>
                 <div class="stat-data">
                     <div class="stat-number">{{ stats.totalScans }}</div>
-                    <div class="stat-title">今日扫描提交</div>
+                    <div class="stat-title">总扫描提交数</div>
                 </div>
             </div>
         </el-card>
@@ -146,7 +176,7 @@ const handleNewScan = () => {
             </template>
             <div class="chart-placeholder">
                 <i class="fas fa-chart-line"></i>
-                <LineChart :data="scanData"/>
+                <LineChart :data="scanData" />
             </div>
         </el-card>
     </div>
@@ -156,14 +186,14 @@ const handleNewScan = () => {
         <template #header>
             <div class="activity-header">
                 <span>最近扫描活动</span>
-                <el-button type="primary" text>查看全部</el-button>
+                <el-button type="primary" text @click="goToRecord">查看全部</el-button>
             </div>
         </template>
-        <el-table :data="scanActivities" class="dark-table" style="width: 80%; margin: auto; margin-top: 16px;">
-            <el-table-column prop="id" label="ID" width="80" />
+        <el-table :data="scanActivities" class="dark-table" style="width: 60%; margin: auto; margin-top: 16px;">
+            <el-table-column prop="id" label="ID" />
             <el-table-column prop="repo" label="仓库" />
-            <el-table-column prop="branch" label="分支" width="120" />
-            <el-table-column prop="status" label="状态" width="100">
+            <el-table-column prop="branch" label="分支" />
+            <el-table-column prop="status" label="状态">
                 <template #default="scope">
                     <el-tag
                         :type="scope.row.status === '完成' ? 'success' : scope.row.status === '进行中' ? 'warning' : 'danger'"
@@ -173,11 +203,6 @@ const handleNewScan = () => {
                 </template>
             </el-table-column>
             <el-table-column prop="date" label="日期" width="140" />
-            <el-table-column label="操作" width="80">
-                <template #default>
-                    <el-button size="small" type="primary">详情</el-button>
-                </template>
-            </el-table-column>
         </el-table>
     </el-card>
 </template>

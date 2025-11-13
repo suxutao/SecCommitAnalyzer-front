@@ -27,7 +27,7 @@
             <span>首页仪表盘</span>
           </el-menu-item>
           <el-menu-item index="/spider">
-            <el-icon><Setting /></el-icon>
+            <el-icon><ChromeFilled /></el-icon>
             <span>爬虫管理</span>
           </el-menu-item>
           <el-menu-item index="/record">
@@ -50,7 +50,7 @@ import { ref, reactive } from 'vue'
 import {
   DataBoard,
   Folder,
-  Setting
+  ChromeFilled
 } from '@element-plus/icons-vue'
 
 // 用户信息
