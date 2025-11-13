@@ -127,7 +127,6 @@ const stopSpider = () => spiderStore.stopSpider()
           <span>爬虫状态</span>
         </div>
       </template>
-
       <div class="status-content">
         <div class="status-item">
           <span class="status-label">运行状态：</span>
@@ -135,7 +134,6 @@ const stopSpider = () => spiderStore.stopSpider()
             {{ spiderStore.isRunning ? '运行中' : '已停止' }}
           </el-tag>
         </div>
-
         <div class="status-item">
           <span class="status-label">设置参数：</span>
           <div class="status-details">
@@ -223,7 +221,6 @@ const stopSpider = () => spiderStore.stopSpider()
     display: flex;
     gap: 16px;
     margin-bottom: 24px;
-
     .el-button {
       padding: 12px 32px;
       font-size: 1.1rem;
@@ -359,7 +356,6 @@ const stopSpider = () => spiderStore.stopSpider()
   .spider-container {
     .config-form {
       flex-direction: column;
-
       .form-item {
         min-width: 100%;
       }
@@ -367,7 +363,6 @@ const stopSpider = () => spiderStore.stopSpider()
 
     .action-buttons {
       flex-direction: column;
-
       .el-button {
         width: 100%;
       }
