@@ -26,13 +26,13 @@
             <el-icon><DataBoard /></el-icon>
             <span>首页仪表盘</span>
           </el-menu-item>
+          <el-menu-item index="/spider">
+            <el-icon><Setting /></el-icon>
+            <span>爬虫管理</span>
+          </el-menu-item>
           <el-menu-item index="/record">
             <el-icon><Folder /></el-icon>
             <span>详细记录</span>
-          </el-menu-item>
-          <el-menu-item index="/">
-            <el-icon><Setting /></el-icon>
-            <span>系统设置</span>
           </el-menu-item>
         </el-menu>
       </el-aside>
