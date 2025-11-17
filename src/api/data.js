@@ -4,12 +4,20 @@ export const test = () => {
     return request.get('/healthz')
 }
 
-export const crawl = (data) => {
+export const updateCrawl = (data) => {
     const params =new URLSearchParams()
     for(let key in data){
         params.append(key,data[key])
     }
-    return request.post('/crawl',params)
+    return request.post('/scheduler/config',params)
+}
+
+export const startCrawl = () => {
+    return request.post('/scheduler/start')
+}
+
+export const stopCrawl = () => {
+    return request.post('/scheduler/stop')
 }
 
 export const pageQuery = (data) => {

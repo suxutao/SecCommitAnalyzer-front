@@ -3,42 +3,10 @@ import { watch } from 'vue'
 import { Check, Close } from '@element-plus/icons-vue'
 import { useSpiderStore } from '../stores/spider'
 import { useIntervalFn } from '@vueuse/core'
-import { crawl } from '@/api/data'
 
 // 初始化spider store
 const spiderStore = useSpiderStore()
 
-const pa = async () => {
-  console.log(spiderStore.selectedTimeInterval);
-  
-  // await crawl({
-  //   timeInterval: spiderStore.selectedTimeInterval.value,
-  //   recordCount: spiderStore.selectedRecordCount.value
-  // })
-}
-
-const { pause, resume, isActive } = useIntervalFn(
-  pa,
-  () => spiderStore.selectedTimeInterval * 1000,
-  {
-    immediate: false,
-    immediateCallback: true
-  }
-);
-
-watch(
-  () => spiderStore.isRunning,
-  (newVal) => {
-    if (newVal) {
-      resume(); // 使用 resume 而不是 start
-    } else {
-      pause();  // 使用 pause 而不是 stop
-    }
-  },
-  {
-    immediate: true
-  }
-);
 
 
 // 时间间隔选项
@@ -51,6 +19,9 @@ const timeIntervalOptions = [
   { label: '2分钟', value: 120 },
   { label: '5分钟', value: 300 },
   { label: '10分钟', value: 600 },
+  { label: '30分钟', value: 1800 },
+  { label: '1小时', value: 3600 },
+  { label: '2小时', value: 7200 },
 ]
 
 // 每次爬取条数选项
@@ -69,7 +40,7 @@ const startSpider = () => spiderStore.startSpider()
 const stopSpider = () => spiderStore.stopSpider()
 </script>
 
-<template>
+<template class="current-scope">
   <div class="spider-container">
     <div class="spider-header">
       <div>
@@ -90,7 +61,7 @@ const stopSpider = () => spiderStore.stopSpider()
         <div class="form-item">
           <el-form-item label="爬取时间间隔">
             <el-select v-model="spiderStore.selectedTimeInterval" class="select-width" placeholder="选择时间间隔"
-              :disabled="spiderStore.isRunning">
+              :disabled="spiderStore.isRunning" @change="spiderStore.updateConfig">
               <el-option v-for="item in timeIntervalOptions" :key="item.value" :label="item.label"
                 :value="item.value" />
             </el-select>
@@ -100,10 +71,25 @@ const stopSpider = () => spiderStore.stopSpider()
         <div class="form-item">
           <el-form-item label="每次爬取条数">
             <el-select v-model="spiderStore.selectedRecordCount" class="select-width" placeholder="选择爬取条数"
-              :disabled="spiderStore.isRunning">
+              :disabled="spiderStore.isRunning" @change="spiderStore.updateConfig">
               <el-option v-for="item in recordCountOptions" :key="item.value" :label="item.label" :value="item.value" />
             </el-select>
             <span class="unit-label">条/次</span>
+          </el-form-item>
+        </div>
+        
+        <div class="form-item">
+          <el-form-item label="开始时间">
+            <el-date-picker
+              v-model="spiderStore.startTime"
+              type="datetime"
+              class="select-width"
+              placeholder="选择开始时间"
+              :disabled="spiderStore.isRunning"
+              value-format="YYYY-MM-DD HH:mm:ss"
+              :default-time="spiderStore.startTime"
+              @change="spiderStore.updateConfig"
+            />
           </el-form-item>
         </div>
       </div>
@@ -138,6 +124,12 @@ const stopSpider = () => spiderStore.stopSpider()
           <span class="status-label">设置参数：</span>
           <div class="status-details">
             <span>每 {{ spiderStore.selectedTimeInterval }} 秒钟爬取 {{ spiderStore.selectedRecordCount }} 条记录</span>
+          </div>
+        </div>
+        <div class="status-item">
+          <span class="status-label">开始时间：</span>
+          <div class="status-details">
+            <span>{{ spiderStore.startTime||'未设置' }}</span>
           </div>
         </div>
       </div>
@@ -350,6 +342,164 @@ const stopSpider = () => spiderStore.stopSpider()
   /* 空选项文字色 */
 }
 
+/* 时间选择器深色主题样式 */
+:deep(.el-date-editor) {
+  --el-fill-color-blank: #243042;
+  --el-bg-color-overlay: #1e293b;
+
+  --el-text-color-primary: #E8F3FF;
+  --el-text-color-regular: #CFE3FF;
+  --el-text-color-secondary: #A6CDFF;
+  --el-text-color-placeholder: #7EB8FF;
+
+  /* 边框颜色 */
+  --el-border-color: #4A5568;
+  --el-border-color-light: #4A5568;
+  --el-border-color-lighter: #4A5568;
+  --el-border-color-extra-light: #4A5568;
+
+  /* 下拉面板 */
+  --el-bg-color: #2D3748;
+  --el-bg-color-overlay: #081e44;
+}
+
+/* 时间选择器输入框 */
+.el-date-editor .el-input__inner {
+  background-color: #1f2937;
+  border-color: #4b5563;
+  color: #f3f4f6;
+}
+
+/* 时间选择器输入框hover/focus状态 */
+.el-date-editor .el-input__inner {
+  color: #e2e8f0 !important;
+  background-color: #1f2937 !important;
+  border-color: #4b5563 !important;
+}
+
+.el-date-editor .el-input__inner::placeholder {
+  color: #94a3b8;
+}
+
+.el-date-editor .el-input__inner:hover,
+.el-date-editor .el-input__inner:focus {
+  border-color: #9ca3af;
+}
+
+/* 时间选择器下拉面板 */
+:deep(.el-picker-panel),
+:deep(.el-time-picker__panel) {
+  background-color: #1f2937 !important;
+  border-color: #4b5563 !important;
+}
+
+/* 时间选择器头部 */
+:deep(.el-date-picker__header-label) {
+  color: #e2e8f0;
+}
+
+/* 时间选择器星期标签 */
+:deep(.el-date-picker__week-header),
+:deep(.el-time-panel__hour),
+:deep(.el-time-panel__minute),
+:deep(.el-time-panel__second) {
+  color: #94a3b8;
+}
+
+/* 时间选择器日期单元格 */
+:deep(.el-date-picker__cell) {
+  color: #e2e8f0;
+}
+
+/* 时间选择器日期单元格hover状态 */
+:deep(.el-date-picker__cell:hover) {
+  background-color: #a8afba;
+}
+
+/* 时间选择器当前日期 */
+:deep(.el-date-picker__cell--current:not(.el-date-picker__cell--disabled)) {
+  color: #60a5fa;
+}
+
+/* 时间选择器选中日期 */
+:deep(.el-date-picker__cell--selected:not(.el-date-picker__cell--disabled)) {
+  background-color: #3b82f6;
+  color: #ffffff;
+}
+
+/* 时间选择器时间部分样式 */
+:deep(.el-time-spinner__item),
+:deep(.el-time-panel__item),
+:deep(.el-time-spinner__content .el-select-dropdown__item),
+:deep(.el-time-panel__hour),
+:deep(.el-time-panel__minute),
+:deep(.el-time-panel__second),
+:deep(.el-time-spinner__content .el-select-dropdown__item span) {
+  color: #e2e8f0 !important;
+}
+
+/* 时间选择器时间部分hover状态 */
+:deep(.el-time-spinner__item:hover:not(.el-time-spinner__item--disabled)),
+:deep(.el-time-panel__item:hover:not(.el-time-panel__item--disabled)),
+:deep(.el-time-spinner__content .el-select-dropdown__item:hover),
+:deep(.el-time-panel__hour:hover),
+:deep(.el-time-panel__minute:hover),
+:deep(.el-time-panel__second:hover),
+:deep(.el-time-spinner__content .el-select-dropdown__item:hover span) {
+  background-color: #374151 !important;
+  color: #ffffff !important;
+}
+
+/* 时间选择器时间部分选中状态 */
+:deep(.el-time-spinner__item--active),
+:deep(.el-time-panel__item--active),
+:deep(.el-time-spinner__content .el-select-dropdown__item.selected),
+:deep(.el-time-panel__hour--active),
+:deep(.el-time-panel__minute--active),
+:deep(.el-time-panel__second--active),
+:deep(.el-time-spinner__content .el-select-dropdown__item.selected span) {
+  background-color: #3b82f6 !important;
+  color: #ffffff !important;
+}
+
+/* 时间选择器头部 */
+:deep(.el-time-picker__header),
+:deep(.el-picker-panel__header),
+:deep(.el-time-panel__footer button) {
+  color: #e2e8f0 !important;
+}
+
+/* 时间选择器分隔符 */
+:deep(.el-time-spinner__divider),
+:deep(.el-time-panel__divider) {
+  color: #94a3b8 !important;
+}
+
+/* 时间选择器面板背景 */
+:deep(.el-time-picker__panel),
+:deep(.el-time-panel) {
+  background-color: #1f2937 !important;
+  border-color: #374151 !important;
+}
+
+/* 时间选择器滚动条 */
+:deep(.el-time-panel__content::-webkit-scrollbar) {
+  width: 6px;
+  height: 6px;
+}
+
+:deep(.el-time-panel__content::-webkit-scrollbar-track) {
+  background: #1f2937;
+}
+
+:deep(.el-time-panel__content::-webkit-scrollbar-thumb) {
+  background-color: #374151;
+  border-radius: 3px;
+}
+
+:deep(.el-time-panel__content::-webkit-scrollbar-thumb:hover) {
+  background-color: #4b5563;
+}
 
 // 响应式设计
 @media (max-width: 768px) {
@@ -368,5 +518,12 @@ const stopSpider = () => spiderStore.stopSpider()
       }
     }
   }
+}
+</style>
+
+<style scoped>
+.current-scope {
+  --el-text-color-regular: #e2e8f0 !important;
+  --el-text-color-primary: #ffffff !important;
 }
 </style>

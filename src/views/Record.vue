@@ -1,8 +1,8 @@
 <template>
-    <el-dialog v-model="dialogVisible" width="60%" style="background-color: #2B384B;height: fit-content;">
+    <el-dialog v-model="dialogVisible" width="50%" style="background-color: #2B384B;height: fit-content;">
         <Detail :data="ObjectData"></Detail>
     </el-dialog>
-    <el-dialog v-model="analyzeDialogVisible" width="60%" style="background-color: #2B384B;height: fit-content;">
+    <el-dialog v-model="analyzeDialogVisible" width="50%" style="background-color: #2B384B;height: fit-content;">
         <Analyze :data="analyzeData"></Analyze>
     </el-dialog>
     <!-- 页面标题和操作 -->
@@ -19,11 +19,12 @@
             <div class="card-header">
                 <span>提交记录</span>
                 <div>
-                    <el-select placeholder="所有状态" v-model="selectedState" style="width: 150px;" class="dark-select">
-                        <el-option label="所有状态" value="all" />
-                        <el-option label="安全" value="true" />
-                        <el-option label="未知" value="unknown" />
-                        <el-option label="危险" value="false" />
+                    <el-select placeholder="所有补丁" v-model="selectedState" style="width: 150px;" class="dark-select"
+                        @change="loadData">
+                        <el-option label="所有补丁" value="all" />
+                        <el-option label="安全补丁" value="true" />
+                        <el-option label="未知补丁" value="unknown" />
+                        <el-option label="非安全补丁" value="false" />
                     </el-select>
                 </div>
             </div>
@@ -64,9 +65,7 @@
             <el-table-column label="SHA" min-width="180">
                 <template #default="scope">
                     <div class="commit-sha">
-                        <el-tooltip :content="scope.row.sha" placement="top">
-                            <span>{{ scope.row.sha.substring(0, 20) }}...</span>
-                        </el-tooltip>
+                        {{ scope.row.sha }}
                     </div>
                 </template>
             </el-table-column>
@@ -93,12 +92,12 @@
             </el-table-column>
 
             <!-- 安全状态列 -->
-            <el-table-column label="安全状态" width="120" align="center">
+            <el-table-column label="安全补丁" width="120" align="center">
                 <template #default="scope">
                     <el-tag
-                        :type="scope.row.is_security === true ? 'success' : scope.row.is_security === false ? 'danger' : 'warning'"
+                        :type="scope.row.analysis_meta?.raw?.补丁类型 === undefined ? 'warning' : scope.row.analysis_meta?.raw?.补丁类型 === '安全补丁' ? 'success' : 'info'"
                         class="status-tag" size="large">
-                        {{ scope.row.is_security === true ? '安全' : scope.row.is_security === false ? '危险' : '未知' }}
+                        {{ scope.row.analysis_meta?.raw?.补丁类型 === undefined ? '未知补丁' : scope.row.analysis_meta?.raw?.补丁类型 === '安全补丁' ? '安全补丁' : '非安全补丁' }}
                     </el-tag>
                 </template>
             </el-table-column>
@@ -109,7 +108,8 @@
                     <el-button size="medium" type="primary" @click="viewCommitDetails(scope.row)">
                         详情
                     </el-button>
-                    <el-button size="medium" type="success" @click="analyzeCommit(scope.row.sha)">
+                    <el-button size="medium" type="success" :loading="analyzing[scope.row.sha]"
+                        @click="analyzeCommit(scope.row.sha)">
                         分析
                     </el-button>
                 </template>
@@ -141,19 +141,30 @@ const selectedState = ref('all')
 const currentPage = ref(1); // 当前页码（默认第1页）
 const pageSize = ref(10);   // 每页条数（默认10条）
 const total = ref(0);       // 总条数（初始为0，从接口获取）
+const analyzing = ref({})
 
 // 2. 加载数据的函数（核心：根据当前页码和每页条数请求数据）
 const loadData = async () => {
     try {
         // 调用接口，传入分页参数
-        const res = await pageQuery({
-            page: currentPage.value,
-            page_size: pageSize.value
-        });
-        total.value = res.total;
-        commitHistory.value = res.items;
+        if (selectedState.value === 'all') {
+            const res = await pageQuery({
+                page: currentPage.value,
+                page_size: pageSize.value
+            });
+            total.value = res.total;
+            commitHistory.value = res.items;
+        } else {
+            const res = await pageQuery({
+                page: currentPage.value,
+                page_size: pageSize.value,
+                is_security: selectedState.value
+            });
+            total.value = res.total;
+            commitHistory.value = res.items;
+        }
     } catch (err) {
-        console.error('加载数据失败：', err);
+        console.error(`加载数据失败：${err}`);
     }
 };
 
@@ -173,14 +184,17 @@ const handleSizeChange = (newSize) => {
 // 分析提交的函数
 const analyzeCommit = async (sha) => {
     try {
+        analyzing.value[sha] = true
         const data = await analyze(sha);
         // 分析完成后，刷新当前页面数据
         await loadData();
         await viewAnalyzeDetails(data.item)
         ElMessage.success('分析提交成功')
     } catch (err) {
-        ElMessage.error('分析提交失败：', err)
+        ElMessage.error(`分析提交失败：${err}`)
         console.error('分析提交失败：', err);
+    } finally {
+        analyzing.value[sha] = false
     }
 };
 

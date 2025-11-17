@@ -1,7 +1,7 @@
 <template>
   <h1 style="font-size: 20px;text-align: center;color: aliceblue;">提交记录详情</h1>
   <div class="data-display-container">
-    <el-descriptions border column="1" class="data-descriptions">
+    <el-descriptions border column="1" class="data-descriptions" label-width="120px">
       <el-descriptions-item label="日期">{{ useDateFormat(commitData.data.date, 'YYYY-MM-DD HH:mm:ss', {
         timeZone: 'UTC'
       }).value }}</el-descriptions-item>
@@ -19,11 +19,11 @@
         <el-link :href="commitData.data.url" target="_blank" type="primary">
           {{ commitData.data.url }}
         </el-link></el-descriptions-item>
-      <el-descriptions-item label="状态">
+      <el-descriptions-item label="安全状态">
         <el-tag
-          :type="commitData.data.is_secure === true ? 'success' : commitData.data.is_secure === false ? 'danger' : 'warning'"
+          :type="commitData.data.analysis_meta?.raw?.补丁类型 === null ? 'warning' : commitData.data.analysis_meta?.raw?.补丁类型 === '安全补丁' ? 'success' : 'info'"
           class="status-tag" size="large">
-          {{ commitData.data.is_secure === true ? '安全' : commitData.data.is_secure === false ? '危险' : '未知' }}
+          {{ commitData.data.analysis_meta?.raw?.补丁类型 === null ? '未知补丁' : commitData.data.analysis_meta?.raw?.补丁类型 === '安全补丁' ? '安全补丁' : '非安全补丁' }}
         </el-tag>
       </el-descriptions-item>
       <el-descriptions-item label="提交信息">
@@ -44,15 +44,6 @@ import { useDateFormat } from '@vueuse/core'
 // 数据源
 const commitData = defineProps({
   data: { required: true }
-})
-
-// 根据状态获取标签类型
-const getStatusType = computed(() => {
-  switch (commitData.data.is_secure) {
-    case true: return 'success'
-    case false: return 'danger'
-    default: return 'warning'
-  }
 })
 
 // 处理转义字符的函数

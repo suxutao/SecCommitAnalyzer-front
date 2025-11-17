@@ -1,25 +1,46 @@
 <template>
-  <h1 style="font-size: 20px;text-align: center;color: aliceblue;">提交记录详情</h1>
+  <h1 style="font-size: 20px;text-align: center;color: aliceblue;">分析记录详情</h1>
   <div class="data-display-container">
-    <el-descriptions border column="1" class="data-descriptions">
+    <el-descriptions border column="1" class="data-descriptions" label-width="120px">
       <el-descriptions-item label="分析时间">
         {{ useDateFormat(analyzeData.data.date, 'YYYY-MM-DD HH:mm:ss', {timeZone: 'UTC'}).value }}
       </el-descriptions-item>
       <el-descriptions-item label="SHA">
         <span class="sha-text">{{ analyzeData.data.sha }}</span>
       </el-descriptions-item>
-      <el-descriptions-item label="cwe">
+      <el-descriptions-item label="CWE编号">
         {{ analyzeData.data.cwe }}
       </el-descriptions-item>
       <el-descriptions-item label="状态">
         <el-tag
-          :type="analyzeData.data.is_secure === true ? 'success' : analyzeData.data.is_secure === false ? 'danger' : 'warning'"
+          :type="analyzeData.data.analysis_meta?.raw?.补丁类型 === null ? 'warning' : analyzeData.data.analysis_meta?.raw?.补丁类型 === '安全补丁' ? 'success' : 'info'"
           class="status-tag" size="large">
-          {{ analyzeData.data.is_secure === true ? '安全' : analyzeData.data.is_secure === false ? '危险' : '未知' }}
+          {{ analyzeData.data.analysis_meta?.raw?.补丁类型 === null ? '未知补丁' : analyzeData.data.analysis_meta?.raw?.补丁类型 === '安全补丁' ? '安全补丁' : '非安全补丁' }}
         </el-tag>
       </el-descriptions-item>
-      <el-descriptions-item label="元信息">
-        {{ analyzeData.data.analyze_meta }}
+      <!-- <el-descriptions-item label="元信息">
+        {{ analyzeData.data.analysis_meta }}
+      </el-descriptions-item> -->
+      <el-descriptions-item label="引擎">
+        {{ analyzeData.data.analysis_meta?.engine || '无' }}
+      </el-descriptions-item>
+      <el-descriptions-item label="版本">
+        {{ analyzeData.data.analysis_meta?.version || '无' }}
+      </el-descriptions-item>
+      <el-descriptions-item label="修复方案">
+        {{ analyzeData.data.analysis_meta?.raw?.修复方案 || '无' }}
+      </el-descriptions-item>
+      <el-descriptions-item label="根本原因">
+        {{ analyzeData.data.analysis_meta?.raw?.根本原因 || '无' }}
+      </el-descriptions-item>
+      <el-descriptions-item label="关联的CVE">
+        {{ analyzeData.data.analysis_meta?.raw?.关联的CVE || '无' }}
+      </el-descriptions-item>
+      <el-descriptions-item label="漏洞类型">
+        {{ analyzeData.data.analysis_meta?.raw?.漏洞类型 || '无' }}
+      </el-descriptions-item>
+      <el-descriptions-item label="补丁类型">
+        {{ analyzeData.data.analysis_meta?.raw?.补丁类型 || '无' }}
       </el-descriptions-item>
     </el-descriptions>
   </div>
@@ -35,11 +56,20 @@ const analyzeData = defineProps({
   data: { required: true }
 })
 
-// 处理转义字符的函数
-const formatDiff = (diffStr) => {
-  if (!diffStr) return '';
-  return diffStr.replace(/\r\n/g, '<br>').replace(/\n/g, '<br>');
-};
+const formattedMeta = computed(() => {
+  const jsonStr = analyzeData.data?.analysis_meta;
+  if (!jsonStr) return '无元信息';
+
+  try {
+    // 1. 解析JSON字符串为JavaScript对象
+    const jsonObj = JSON.parse(jsonStr);
+    // 2. 格式化对象为带缩进的字符串（2个空格缩进，保留层级）
+    return JSON.stringify(jsonObj, null, 2);
+  } catch (error) {
+    // 处理JSON格式错误（如字符串不完整、语法错误）
+    return `JSON解析失败：${error.message}`;
+  }
+});
 </script>
 
 <style>
