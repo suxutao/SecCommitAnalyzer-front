@@ -17,10 +17,14 @@ instance.interceptors.request.use(
 //添加响应拦截器
 instance.interceptors.response.use(
     (response)=>{
-        return response
+        if(response.data.ok === true){
+            return response.data
+        }
+        ElMessage.error('服务异常：',response.data.error)
+        return Promise.reject(response.data.error)
     },
     (err)=>{
-        ElMessage.error(err.message)
+        ElMessage.error('响应失败：',err)
         return Promise.reject(err)
     }
 )

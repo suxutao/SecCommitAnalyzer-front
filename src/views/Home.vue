@@ -1,11 +1,14 @@
 <script setup>
-import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import SimplePieChart from '../components/PieChart.vue'
 import LineChart from '../components/LineChart.vue'
-import { Search } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus'
 import { useStats } from '../stores/useStats.js'
+import { test, pageQuery } from '@/api/data.js'
+import { useIntervalFn } from '@vueuse/core'
+import { useDateFormat } from '@vueuse/core';
+
 
 // 获取路由实例
 const router = useRouter();
@@ -19,15 +22,7 @@ const goToRecord = () => {
 const stats = useStats();
 
 // 扫描活动数据
-const scanActivities = ref([
-    { id: '001', repo: 'frontend-web-app', branch: 'main', status: '完成', date: '2023-10-15 14:32' },
-    { id: '002', repo: 'backend-api', branch: 'dev', status: '完成', date: '2023-10-15 13:15' },
-    { id: '003', repo: 'mobile-app', branch: 'feature/auth', status: '进行中', date: '2023-10-15 12:42' },
-    { id: '004', repo: 'documentation', branch: 'main', status: '失败', date: '2023-10-15 11:28' },
-    { id: '005', repo: 'frontend-web-app', branch: 'release', status: '完成', date: '2023-10-15 10:15' }
-])
-
-
+const scanActivities = ref([])
 
 // 漏洞类型分布
 const vulnerabilityDistribution = ref([
@@ -49,6 +44,18 @@ const scanData = ref([
     { date: '10-07', scans: 25 }
 ])
 
+// 定时任务
+const { pause, resume, isActive } = useIntervalFn(async () => {
+    try {
+        const res = await pageQuery({
+            page: 1,
+            page_size: 5,
+        })
+        scanActivities.value = res.items
+    } catch (error) {
+        ElMessage.error('获取扫描活动失败')
+    }
+}, 5000, { immediate: true, immediateCallback: true })
 
 // 生成过去7天的日期（格式：MM-DD）
 const generatePast7Days = () => {
@@ -68,6 +75,15 @@ const generatePast7Days = () => {
     return past7Days;
 };
 
+const handleTestConnection = async () => {
+    try {
+        await test()
+        ElMessage.success('连接成功')
+    } catch (error) {
+        ElMessage.error('连接失败')
+    }
+}
+
 // 更新scanData中的date为过去7天
 onMounted(() => {
     const past7Days = generatePast7Days();
@@ -76,6 +92,10 @@ onMounted(() => {
         item.date = past7Days[index];
     });
 });
+
+onUnmounted(() => {
+    pause()
+})
 </script>
 
 <template>
@@ -84,11 +104,8 @@ onMounted(() => {
             <h1 class="welcome-title">安全提交分析控制台</h1>
             <p class="welcome-subtitle">监控和分析代码提交中的安全漏洞和潜在风险</p>
         </div>
-        <el-button type="success" @click="handleNewScan">
-            <el-icon>
-                <Search />
-            </el-icon>
-            新建扫描
+        <el-button type="success" @click="handleTestConnection">
+            测试连接
         </el-button>
     </div>
 
@@ -189,20 +206,57 @@ onMounted(() => {
                 <el-button type="primary" text @click="goToRecord">查看全部</el-button>
             </div>
         </template>
-        <el-table :data="scanActivities" class="dark-table" style="width: 60%; margin: auto; margin-top: 16px;">
-            <el-table-column prop="id" label="ID" />
-            <el-table-column prop="repo" label="仓库" />
-            <el-table-column prop="branch" label="分支" />
-            <el-table-column prop="status" label="状态">
+        <el-table :data="scanActivities" class="dark-table commits-table" style="width: 50%;margin: auto;">
+            <!-- ID列 -->
+            <el-table-column label="ID" width="100">
+                <template #default="scope">
+                    <div class="commit-id">
+                        <i class="fas fa-code-commit"></i>
+                        {{ scope.row.sha.substring(0, 8) }}
+                    </div>
+                </template>
+            </el-table-column>
+
+            <!-- 日期列 -->
+            <el-table-column label="日期">
+                <template #default="scope">
+                    <div class="commit-date">
+                        {{ useDateFormat(scope.row.date, 'YYYY-MM-DD HH:mm:ss', { timeZone: 'UTC' }).value }}
+                    </div>
+                </template>
+            </el-table-column>
+
+            <!-- 分支和消息 -->
+            <el-table-column label="仓库信息" min-width="150">
+                <template #default="scope">
+                    <div class="commit-info">
+                        <div class="commit-message">
+                            {{ scope.row.repo_name }}
+                        </div>
+                        <div class="commit-meta">
+                            <el-tag size="small" effect="plain" class="branch-tag">
+                                <i class="fas fa-code-branch"></i>
+                                {{ scope.row.repo_owner }}
+                            </el-tag>
+                            <span class="commit-author">
+                                <i class="fas fa-user"></i>
+                                {{ scope.row.author }}
+                            </span>
+                        </div>
+                    </div>
+                </template>
+            </el-table-column>
+
+            <!-- 安全状态列 -->
+            <el-table-column label="安全状态" align="center">
                 <template #default="scope">
                     <el-tag
-                        :type="scope.row.status === '完成' ? 'success' : scope.row.status === '进行中' ? 'warning' : 'danger'"
-                        size="big">
-                        {{ scope.row.status }}
+                        :type="scope.row.is_security === true ? 'success' : scope.row.is_security === false ? 'danger' : 'warning'"
+                        class="status-tag" size="large">
+                        {{ scope.row.is_security === true ? '安全' : scope.row.is_security === false ? '危险' : '未知' }}
                     </el-tag>
                 </template>
             </el-table-column>
-            <el-table-column prop="date" label="日期" width="140" />
         </el-table>
     </el-card>
 </template>

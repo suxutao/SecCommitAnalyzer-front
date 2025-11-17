@@ -2,35 +2,24 @@
   <h1 style="font-size: 20px;text-align: center;color: aliceblue;">提交记录详情</h1>
   <div class="data-display-container">
     <el-descriptions border column="1" class="data-descriptions">
-      <el-descriptions-item label="日期">{{ useDateFormat(commitData.data.date, 'YYYY-MM-DD HH:mm:ss', {
-        timeZone: 'UTC'
-      }).value }}</el-descriptions-item>
+      <el-descriptions-item label="分析时间">
+        {{ useDateFormat(analyzeData.data.date, 'YYYY-MM-DD HH:mm:ss', {timeZone: 'UTC'}).value }}
+      </el-descriptions-item>
       <el-descriptions-item label="SHA">
-        <span class="sha-text">{{ commitData.data.sha }}</span>
+        <span class="sha-text">{{ analyzeData.data.sha }}</span>
       </el-descriptions-item>
-      <el-descriptions-item label="仓库信息">
-        <el-breadcrumb separator="/" class="current-scope">
-          <el-breadcrumb-item>{{ commitData.data.repo_name }}</el-breadcrumb-item>
-          <el-breadcrumb-item>{{ commitData.data.repo_owner }}</el-breadcrumb-item>
-          <el-breadcrumb-item>{{ commitData.data.author }}</el-breadcrumb-item>
-        </el-breadcrumb>
+      <el-descriptions-item label="cwe">
+        {{ analyzeData.data.cwe }}
       </el-descriptions-item>
-      <el-descriptions-item label="链接">
-        <el-link :href="commitData.data.url" target="_blank" type="primary">
-          {{ commitData.data.url }}
-        </el-link></el-descriptions-item>
       <el-descriptions-item label="状态">
         <el-tag
-          :type="commitData.data.is_secure === true ? 'success' : commitData.data.is_secure === false ? 'danger' : 'warning'"
+          :type="analyzeData.data.is_secure === true ? 'success' : analyzeData.data.is_secure === false ? 'danger' : 'warning'"
           class="status-tag" size="large">
-          {{ commitData.data.is_secure === true ? '安全' : commitData.data.is_secure === false ? '危险' : '未知' }}
+          {{ analyzeData.data.is_secure === true ? '安全' : analyzeData.data.is_secure === false ? '危险' : '未知' }}
         </el-tag>
       </el-descriptions-item>
-      <el-descriptions-item label="提交信息">
-        <div v-html="commitData.data.message" class="diff-content"></div>
-      </el-descriptions-item>
-      <el-descriptions-item label="提交差异">
-        <div v-html="formatDiff(commitData.data.diff)" class="diff-content"></div>
+      <el-descriptions-item label="元信息">
+        {{ analyzeData.data.analyze_meta }}
       </el-descriptions-item>
     </el-descriptions>
   </div>
@@ -38,21 +27,12 @@
 
 <script setup>
 import { computed, defineProps } from 'vue'
-import { ElDescriptions, ElDescriptionsItem, ElTag, ElBreadcrumb, ElBreadcrumbItem } from 'element-plus'
+import { ElDescriptions, ElDescriptionsItem, ElTag} from 'element-plus'
 import { useDateFormat } from '@vueuse/core'
 
 // 数据源
-const commitData = defineProps({
+const analyzeData = defineProps({
   data: { required: true }
-})
-
-// 根据状态获取标签类型
-const getStatusType = computed(() => {
-  switch (commitData.data.is_secure) {
-    case true: return 'success'
-    case false: return 'danger'
-    default: return 'warning'
-  }
 })
 
 // 处理转义字符的函数

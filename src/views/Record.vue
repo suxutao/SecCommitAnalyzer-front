@@ -1,6 +1,9 @@
 <template>
-    <el-dialog v-model="dialogVisible" width="50%" style="background-color: #2B384B;height: fit-content;">
+    <el-dialog v-model="dialogVisible" width="60%" style="background-color: #2B384B;height: fit-content;">
         <Detail :data="ObjectData"></Detail>
+    </el-dialog>
+    <el-dialog v-model="analyzeDialogVisible" width="60%" style="background-color: #2B384B;height: fit-content;">
+        <Analyze :data="analyzeData"></Analyze>
     </el-dialog>
     <!-- 页面标题和操作 -->
     <div class="page-header">
@@ -14,15 +17,15 @@
     <el-card class="commits-card">
         <template #header>
             <div class="card-header">
-                <span>最近提交记录</span>
-                <!-- <div>
-                    <el-select placeholder="所有分支" v-model="selectedBranch" style="width: 150px;" class="dark-select">
-                        <el-option label="所有分支" value="all" />
-                        <el-option label="main" value="main" />
-                        <el-option label="dev" value="dev" />
-                        <el-option label="release" value="release" />
+                <span>提交记录</span>
+                <div>
+                    <el-select placeholder="所有状态" v-model="selectedState" style="width: 150px;" class="dark-select">
+                        <el-option label="所有状态" value="all" />
+                        <el-option label="安全" value="true" />
+                        <el-option label="未知" value="unknown" />
+                        <el-option label="危险" value="false" />
                     </el-select>
-                </div> -->
+                </div>
             </div>
         </template>
 
@@ -32,7 +35,7 @@
                 <template #default="scope">
                     <div class="commit-id">
                         <i class="fas fa-code-commit"></i>
-                        {{ scope.row.id.substring(0, 8) }}
+                        {{ scope.row.sha.substring(0, 8) }}
                     </div>
                 </template>
             </el-table-column>
@@ -41,7 +44,18 @@
             <el-table-column label="日期" width="160">
                 <template #default="scope">
                     <div class="commit-date">
-                        {{ scope.row.date }}
+                        {{ useDateFormat(scope.row.date, 'YYYY-MM-DD HH:mm:ss', { timeZone: 'UTC' }).value }}
+                    </div>
+                </template>
+            </el-table-column>
+
+            <!-- 链接列 -->
+            <el-table-column label="链接" width="160">
+                <template #default="scope">
+                    <div>
+                        <el-link :href="scope.row.url" target="_blank" type="primary">
+                            {{ scope.row.url }}
+                        </el-link>
                     </div>
                 </template>
             </el-table-column>
@@ -58,16 +72,16 @@
             </el-table-column>
 
             <!-- 分支和消息 -->
-            <el-table-column label="提交信息" min-width="300">
+            <el-table-column label="仓库信息" min-width="300">
                 <template #default="scope">
                     <div class="commit-info">
                         <div class="commit-message">
-                            {{ scope.row.message }}
+                            {{ scope.row.repo_name }}
                         </div>
                         <div class="commit-meta">
                             <el-tag size="small" effect="plain" class="branch-tag">
                                 <i class="fas fa-code-branch"></i>
-                                {{ scope.row.branch }}
+                                {{ scope.row.repo_owner }}
                             </el-tag>
                             <span class="commit-author">
                                 <i class="fas fa-user"></i>
@@ -82,9 +96,9 @@
             <el-table-column label="安全状态" width="120" align="center">
                 <template #default="scope">
                     <el-tag
-                        :type="scope.row.status === 'safe' ? 'success' : scope.row.status === 'warning' ? 'warning' : 'danger'"
+                        :type="scope.row.is_security === true ? 'success' : scope.row.is_security === false ? 'danger' : 'warning'"
                         class="status-tag" size="large">
-                        {{ scope.row.status === 'safe' ? '安全' : scope.row.status === 'warning' ? '警告' : '危险' }}
+                        {{ scope.row.is_security === true ? '安全' : scope.row.is_security === false ? '危险' : '未知' }}
                     </el-tag>
                 </template>
             </el-table-column>
@@ -95,7 +109,7 @@
                     <el-button size="medium" type="primary" @click="viewCommitDetails(scope.row)">
                         详情
                     </el-button>
-                    <el-button size="medium" type="success" @click="viewCommitDetails(scope.row)">
+                    <el-button size="medium" type="success" @click="analyzeCommit(scope.row.sha)">
                         分析
                     </el-button>
                 </template>
@@ -104,67 +118,75 @@
 
         <!-- 分页控件 -->
         <div class="pagination-container">
-            <el-pagination :page-size="10" :total="25" layout="total, prev, pager, next, jumper" background
-                class="dark-pagination" />
+            <el-pagination :current-page="currentPage" :page-size="pageSize" :total="total"
+                layout="prev, pager, next, jumper, sizes, total" background class="dark-pagination"
+                :page-sizes="[10, 20, 50, 100, 200]" @current-change="handleCurrentChange"
+                @size-change="handleSizeChange" />
         </div>
     </el-card>
 </template>
 
 <script setup>
-import { ref, nextTick } from 'vue'
+import { ref, nextTick, onMounted } from 'vue'
 import Detail from './Detail.vue'
+import Analyze from './Analyze.vue'
+import { useDateFormat } from '@vueuse/core'
+import { pageQuery, analyze } from '@/api/data'
+import { ElMessage } from 'element-plus'
 
 // 选择的分支
-const selectedBranch = ref('all')
+const selectedState = ref('all')
+
+// 1. 定义分页相关响应式变量
+const currentPage = ref(1); // 当前页码（默认第1页）
+const pageSize = ref(10);   // 每页条数（默认10条）
+const total = ref(0);       // 总条数（初始为0，从接口获取）
+
+// 2. 加载数据的函数（核心：根据当前页码和每页条数请求数据）
+const loadData = async () => {
+    try {
+        // 调用接口，传入分页参数
+        const res = await pageQuery({
+            page: currentPage.value,
+            page_size: pageSize.value
+        });
+        total.value = res.total;
+        commitHistory.value = res.items;
+    } catch (err) {
+        console.error('加载数据失败：', err);
+    }
+};
+
+// 3. 页码变化时的处理函数
+const handleCurrentChange = (newPage) => {
+    currentPage.value = newPage; // 更新当前页码
+    loadData(); // 重新加载数据
+};
+
+// 4. 每页条数变化时的处理函数
+const handleSizeChange = (newSize) => {
+    pageSize.value = newSize;    // 更新每页条数
+    currentPage.value = 1;       // 重置为第1页（通常条数变化后从第1页开始显示）
+    loadData(); // 重新加载数据
+};
+
+// 分析提交的函数
+const analyzeCommit = async (sha) => {
+    try {
+        const data = await analyze(sha);
+        // 分析完成后，刷新当前页面数据
+        await loadData();
+        await viewAnalyzeDetails(data.item)
+        ElMessage.success('分析提交成功')
+    } catch (err) {
+        ElMessage.error('分析提交失败：', err)
+        console.error('分析提交失败：', err);
+    }
+};
+
 
 // 提交历史数据
-const commitHistory = ref([
-    {
-        id: 'a1b2c3d4',
-        date: '2023-10-15 14:32:25',
-        sha: 'a1b2c3d4e5f67890123456789abcdef01234567',
-        message: '修复XSS漏洞 - 用户输入验证',
-        author: '张三',
-        status: 'safe',
-        branch: 'main'
-    },
-    {
-        id: 'b2c3d4e5',
-        date: '2023-10-15 13:15:42',
-        sha: 'b2c3d4e5f67890123456789abcdef0123456789',
-        message: '添加SQL注入防护',
-        author: '李四',
-        status: 'safe',
-        branch: 'dev'
-    },
-    {
-        id: 'c3d4e5f6',
-        date: '2023-10-15 12:42:18',
-        sha: 'c3d4e5f67890123456789abcdef0123456789ab',
-        message: '更新依赖包版本',
-        author: '王五',
-        status: 'warning',
-        branch: 'feature/auth'
-    },
-    {
-        id: 'd4e5f678',
-        date: '2023-10-15 11:28:53',
-        sha: 'd4e5f67890123456789abcdef0123456789abcd',
-        message: '临时提交，包含敏感信息',
-        author: '赵六',
-        status: 'danger',
-        branch: 'hotfix'
-    },
-    {
-        id: 'e5f67890',
-        date: '2023-10-15 10:15:37',
-        sha: 'e5f67890123456789abcdef0123456789abcde',
-        message: '重构用户认证模块',
-        author: '钱七',
-        status: 'safe',
-        branch: 'main'
-    }
-])
+const commitHistory = ref([])
 
 // 查看提交详情
 const dialogVisible = ref(false)
@@ -176,6 +198,20 @@ const viewCommitDetails = async (commit) => {
     console.log('查看提交详情:', ObjectData.value)
     ObjectData.value = commit
 }
+
+const analyzeDialogVisible = ref(false)
+const analyzeData = ref({})
+const viewAnalyzeDetails = async (commit) => {
+    console.log('查看分析详情:', commit)
+    analyzeDialogVisible.value = true
+    await nextTick()
+    console.log('查看分析详情:', analyzeData.value)
+    analyzeData.value = commit
+}
+
+onMounted(() => {
+    loadData();
+})
 </script>
 
 <style lang="scss" scoped>
@@ -384,7 +420,7 @@ const viewCommitDetails = async (commit) => {
 
 .pagination-container {
     display: flex;
-    justify-content: flex-end;
+    justify-content: center;
     margin-top: 20px;
 }
 

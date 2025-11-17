@@ -13,11 +13,9 @@ export const crawl = (data) => {
 }
 
 export const pageQuery = (data) => {
-    const params =new URLSearchParams()
-    for(let key in data){
-        params.append(key,data[key])
-    }
-    return request.get('/commits',params)
+    return request.get('/commits',{
+        params:data
+    })
 }
 
 export const analyze = (sha) => {
