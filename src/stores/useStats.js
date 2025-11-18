@@ -6,7 +6,6 @@ export const useStats = () => {
         totalScans: 876,
         securityRate: 96,
         vulnerabilities: 35,
-        potentialRisks: 12,
-        qita: 7
+        potentialRisks: 12
     });
 };

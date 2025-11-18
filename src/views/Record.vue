@@ -95,9 +95,9 @@
             <el-table-column label="安全补丁" width="120" align="center">
                 <template #default="scope">
                     <el-tag
-                        :type="scope.row.analysis_meta?.raw?.补丁类型 === undefined ? 'warning' : scope.row.analysis_meta?.raw?.补丁类型 === '安全补丁' ? 'success' : 'info'"
+                        :type="scope.row.is_security === true ? 'success' : scope.row.is_security === false ? 'danger' : 'warning'"
                         class="status-tag" size="large">
-                        {{ scope.row.analysis_meta?.raw?.补丁类型 === undefined ? '未知补丁' : scope.row.analysis_meta?.raw?.补丁类型 === '安全补丁' ? '安全补丁' : '非安全补丁' }}
+                        {{ scope.row.is_security === true ? '安全' : scope.row.is_security === false ? '危险' : '未知' }}
                     </el-tag>
                 </template>
             </el-table-column>
@@ -133,6 +133,7 @@ import Analyze from './Analyze.vue'
 import { useDateFormat } from '@vueuse/core'
 import { pageQuery, analyze } from '@/api/data'
 import { ElMessage } from 'element-plus'
+import { useStats } from '../stores/useStats.js'
 
 // 选择的分支
 const selectedState = ref('all')
@@ -142,6 +143,7 @@ const currentPage = ref(1); // 当前页码（默认第1页）
 const pageSize = ref(10);   // 每页条数（默认10条）
 const total = ref(0);       // 总条数（初始为0，从接口获取）
 const analyzing = ref({})
+const stats = useStats();
 
 // 2. 加载数据的函数（核心：根据当前页码和每页条数请求数据）
 const loadData = async () => {
@@ -152,6 +154,7 @@ const loadData = async () => {
                 page: currentPage.value,
                 page_size: pageSize.value
             });
+            stats.value.totalScans = res.total;
             total.value = res.total;
             commitHistory.value = res.items;
         } else {

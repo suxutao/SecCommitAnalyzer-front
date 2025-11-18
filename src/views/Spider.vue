@@ -1,12 +1,25 @@
 <script setup>
-import { watch } from 'vue'
 import { Check, Close } from '@element-plus/icons-vue'
 import { useSpiderStore } from '../stores/spider'
-import { useIntervalFn } from '@vueuse/core'
+import { updateCrawl } from '@/api/data'
+import { ElMessage } from 'element-plus'
+import { useDateFormat } from '@vueuse/core'
 
 // 初始化spider store
 const spiderStore = useSpiderStore()
 
+//修改配置
+const updateConfig = async () => {
+  const config = {
+    interval_seconds: spiderStore.selectedTimeInterval,
+    max_commits_per_run: spiderStore.selectedRecordCount,
+    // since: spiderStore.startTime
+  }
+  const configRes=await updateCrawl(config)
+  ElMessage.success(`配置更新成功`)
+  console.log(configRes);
+  console.log('更新配置成功，间隔时间：', spiderStore.selectedTimeInterval, '秒钟，每次爬取：', spiderStore.selectedRecordCount, '条，开始时间：', spiderStore.startTime)
+}
 
 
 // 时间间隔选项
@@ -36,8 +49,8 @@ const recordCountOptions = [
 ]
 
 // 方法引用
-const startSpider = () => spiderStore.startSpider()
-const stopSpider = () => spiderStore.stopSpider()
+const startSpider = async () => spiderStore.startSpider()
+const stopSpider = async () => spiderStore.stopSpider()
 </script>
 
 <template class="current-scope">
@@ -61,7 +74,7 @@ const stopSpider = () => spiderStore.stopSpider()
         <div class="form-item">
           <el-form-item label="爬取时间间隔">
             <el-select v-model="spiderStore.selectedTimeInterval" class="select-width" placeholder="选择时间间隔"
-              :disabled="spiderStore.isRunning" @change="spiderStore.updateConfig">
+              :disabled="spiderStore.isRunning" @change="updateConfig">
               <el-option v-for="item in timeIntervalOptions" :key="item.value" :label="item.label"
                 :value="item.value" />
             </el-select>
@@ -71,25 +84,17 @@ const stopSpider = () => spiderStore.stopSpider()
         <div class="form-item">
           <el-form-item label="每次爬取条数">
             <el-select v-model="spiderStore.selectedRecordCount" class="select-width" placeholder="选择爬取条数"
-              :disabled="spiderStore.isRunning" @change="spiderStore.updateConfig">
+              :disabled="spiderStore.isRunning" @change="updateConfig">
               <el-option v-for="item in recordCountOptions" :key="item.value" :label="item.label" :value="item.value" />
             </el-select>
             <span class="unit-label">条/次</span>
           </el-form-item>
         </div>
-        
+
         <div class="form-item">
           <el-form-item label="开始时间">
-            <el-date-picker
-              v-model="spiderStore.startTime"
-              type="datetime"
-              class="select-width"
-              placeholder="选择开始时间"
-              :disabled="spiderStore.isRunning"
-              value-format="YYYY-MM-DD HH:mm:ss"
-              :default-time="spiderStore.startTime"
-              @change="spiderStore.updateConfig"
-            />
+            <el-date-picker v-model="spiderStore.startTime" type="datetime" class="select-width" placeholder="选择开始时间"
+              :disabled="spiderStore.isRunning" value-format="YYYY-MM-DD HH:mm:ss" @change="updateConfig" />
           </el-form-item>
         </div>
       </div>
@@ -129,7 +134,7 @@ const stopSpider = () => spiderStore.stopSpider()
         <div class="status-item">
           <span class="status-label">开始时间：</span>
           <div class="status-details">
-            <span>{{ spiderStore.startTime||'未设置' }}</span>
+            <span>{{ spiderStore.startTime || '未设置' }}</span>
           </div>
         </div>
       </div>
@@ -213,6 +218,7 @@ const stopSpider = () => spiderStore.stopSpider()
     display: flex;
     gap: 16px;
     margin-bottom: 24px;
+
     .el-button {
       padding: 12px 32px;
       font-size: 1.1rem;
@@ -506,6 +512,7 @@ const stopSpider = () => spiderStore.stopSpider()
   .spider-container {
     .config-form {
       flex-direction: column;
+
       .form-item {
         min-width: 100%;
       }
@@ -513,6 +520,7 @@ const stopSpider = () => spiderStore.stopSpider()
 
     .action-buttons {
       flex-direction: column;
+
       .el-button {
         width: 100%;
       }

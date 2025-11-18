@@ -30,7 +30,7 @@ const vulnerabilityDistribution = ref([
     { type: '空指针', count: 8, color: '#f97316' },
     { type: '整数溢出', count: 5, color: '#eab308' },
     { type: '死锁', count: 3, color: '#84cc16' },
-    { type: '其他', count: stats.value.qita, color: '#64748b' }
+    { type: '其他', count: 7, color: '#64748b' }
 ])
 
 //扫描数据

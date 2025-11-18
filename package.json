@@ -9,14 +9,13 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview",
-    "test:unit": "vitest"
+    "preview": "vite preview"
   },
   "dependencies": {
     "@vueuse/core": "^14.0.0",
     "axios": "^1.13.2",
     "echarts": "^6.0.0",
-    "element-plus": "^2.11.2",
+    "element-plus": "^2.11.8",
     "pinia": "^3.0.3",
     "pinia-plugin-persistedstate": "^4.5.0",
     "vue": "^3.5.18",
@@ -28,7 +27,6 @@
     "jsdom": "^26.1.0",
     "sass-embedded": "^1.92.1",
     "vite": "^7.0.6",
-    "vite-plugin-vue-devtools": "^8.0.0",
-    "vitest": "^3.2.4"
+    "vite-plugin-vue-devtools": "^8.0.0"
   }
 }

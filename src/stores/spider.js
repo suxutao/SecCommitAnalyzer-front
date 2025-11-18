@@ -2,6 +2,9 @@ import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import { ElMessage } from 'element-plus'
 import { updateCrawl, startCrawl, stopCrawl } from '@/api/data'
+import { useDateFormat } from '@vueuse/core'
+
+
 
 export const useSpiderStore = defineStore('spider', () => {
   // 爬虫运行状态
@@ -10,7 +13,7 @@ export const useSpiderStore = defineStore('spider', () => {
   // 爬虫配置参数
   const selectedTimeInterval = ref(5)
   const selectedRecordCount = ref(10)
-  const startTime = ref(new Date(2025, 9, 1, 0, 0, 0))
+  const startTime = ref('2025-10-01 00:00:00')
 
   // 控制爬虫的方法
   const startSpider = async () => {
@@ -25,17 +28,6 @@ export const useSpiderStore = defineStore('spider', () => {
     await stopCrawl()
     ElMessage.info('停止爬虫')
     console.log('停止爬虫')
-  }
-
-  const updateConfig = async () => {
-    const config = {
-      interval_seconds: selectedTimeInterval.value,
-      max_commits_per_run: selectedRecordCount.value,
-      since: startTime.value
-    }
-    await updateCrawl(config)
-    ElMessage.success('更新配置成功')
-    console.log('更新配置成功，间隔时间：', selectedTimeInterval.value, '秒钟，每次爬取：', selectedRecordCount.value, '条，开始时间：', startTime.value)
   }
 
   const setTimeInterval = async (interval) => {
@@ -55,13 +47,13 @@ export const useSpiderStore = defineStore('spider', () => {
 
   return {
     isRunning,
+    startTime,
     selectedTimeInterval,
     selectedRecordCount,
     setStartTime,
     startSpider,
     stopSpider,
     setTimeInterval,
-    setRecordCount,
-    updateConfig
+    setRecordCount
   }
 })

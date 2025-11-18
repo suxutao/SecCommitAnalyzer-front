@@ -21,9 +21,9 @@
         </el-link></el-descriptions-item>
       <el-descriptions-item label="安全状态">
         <el-tag
-          :type="commitData.data.analysis_meta?.raw?.补丁类型 === null ? 'warning' : commitData.data.analysis_meta?.raw?.补丁类型 === '安全补丁' ? 'success' : 'info'"
+          :type="commitData.data.is_security === true ? 'success' : commitData.data.is_security === false ? 'danger' : 'warning'"
           class="status-tag" size="large">
-          {{ commitData.data.analysis_meta?.raw?.补丁类型 === null ? '未知补丁' : commitData.data.analysis_meta?.raw?.补丁类型 === '安全补丁' ? '安全补丁' : '非安全补丁' }}
+          {{ commitData.data.is_security === true ? '安全' : commitData.data.is_security === false ? '危险' : '未知' }}
         </el-tag>
       </el-descriptions-item>
       <el-descriptions-item label="提交信息">
@@ -133,6 +133,7 @@ const formatDiff = (diffStr) => {
 <style scoped>
 /* 在当前作用域的根容器上定义CSS变量 */
 .current-scope {
-  --el-text-color-regular: #ffffff; /* 白色 */
+  --el-text-color-regular: #ffffff;
+  /* 白色 */
 }
 </style>
