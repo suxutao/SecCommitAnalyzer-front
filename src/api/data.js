@@ -5,11 +5,11 @@ export const test = () => {
 }
 
 export const updateCrawl = (data) => {
-    const params = new URLSearchParams()
-    for (const key in data) {
-        params.append(key, data[key])
-    }
-    return request.post('/scheduler/config',params)
+    // const params = new URLSearchParams()
+    // for (const key in data) {
+    //     params.append(key, data[key])
+    // }
+    return request.post('/scheduler/config',data)
 }
 
 export const startCrawl = () => {

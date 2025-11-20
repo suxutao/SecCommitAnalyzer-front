@@ -13,9 +13,9 @@ const updateConfig = async () => {
   const config = {
     interval_seconds: spiderStore.selectedTimeInterval,
     max_commits_per_run: spiderStore.selectedRecordCount,
-    // since: spiderStore.startTime
+    since: spiderStore.startTime.replace(' ', 'T') + 'Z'
   }
-  const configRes=await updateCrawl(config)
+  const configRes = await updateCrawl(config)
   ElMessage.success(`配置更新成功`)
   console.log(configRes);
   console.log('更新配置成功，间隔时间：', spiderStore.selectedTimeInterval, '秒钟，每次爬取：', spiderStore.selectedRecordCount, '条，开始时间：', spiderStore.startTime)
