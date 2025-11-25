@@ -19,19 +19,19 @@
         <el-link :href="commitData.data.url" target="_blank" type="primary">
           {{ commitData.data.url }}
         </el-link></el-descriptions-item>
-      <el-descriptions-item label="安全状态">
+      <el-descriptions-item label="提交类型">
         <el-tag
           :type="commitData.data.is_security === true ? 'success' : commitData.data.is_security === false ? 'danger' : 'warning'"
           class="status-tag" size="large">
-          {{ commitData.data.is_security === true ? '安全' : commitData.data.is_security === false ? '危险' : '未知' }}
+          {{ commitData.data.is_security === true ? '安全补丁' : commitData.data.is_security === false ? '非安全补丁' : '未知' }}
         </el-tag>
       </el-descriptions-item>
       <el-descriptions-item label="提交信息">
         <div v-html="commitData.data.message" class="diff-content"></div>
       </el-descriptions-item>
-      <el-descriptions-item label="提交差异">
+      <!-- <el-descriptions-item label="提交差异">
         <div v-html="formatDiff(commitData.data.diff)" class="diff-content"></div>
-      </el-descriptions-item>
+      </el-descriptions-item> -->
     </el-descriptions>
   </div>
 </template>

@@ -3,7 +3,7 @@
   <div class="data-display-container">
     <el-descriptions border column="1" class="data-descriptions" label-width="120px">
       <el-descriptions-item label="分析时间">
-        {{ useDateFormat(analyzeData.data.date, 'YYYY-MM-DD HH:mm:ss', {timeZone: 'UTC'}).value }}
+        {{ useDateFormat(analyzeData.data.date, 'YYYY-MM-DD HH:mm:ss', { timeZone: 'UTC' }).value }}
       </el-descriptions-item>
       <el-descriptions-item label="SHA">
         <span class="sha-text">{{ analyzeData.data.sha }}</span>
@@ -11,12 +11,25 @@
       <el-descriptions-item label="CWE编号">
         {{ analyzeData.data.cwe }}
       </el-descriptions-item>
-      <el-descriptions-item label="状态">
+      <el-descriptions-item label="提交类型">
         <el-tag
-          :type="analyzeData.data.analysis_meta?.raw?.补丁类型 === null ? 'warning' : analyzeData.data.analysis_meta?.raw?.补丁类型 === '安全补丁' ? 'success' : 'info'"
+          :type="analyzeData.data.analysis_meta?.raw?.patch_type === null ? 'warning' : analyzeData.data.analysis_meta?.raw?.patch_type === 'security' ? 'success' : 'info'"
           class="status-tag" size="large">
-          {{ analyzeData.data.analysis_meta?.raw?.补丁类型 === null ? '未知补丁' : analyzeData.data.analysis_meta?.raw?.补丁类型 === '安全补丁' ? '安全补丁' : '非安全补丁' }}
+          {{ analyzeData.data.analysis_meta?.raw?.patch_type === null ? '未知补丁' :
+            analyzeData.data.analysis_meta?.raw?.patch_type === 'security' ? '安全补丁' : '非安全补丁' }}
         </el-tag>
+      </el-descriptions-item>
+      <el-descriptions-item label="分支来源">
+        {{ analyzeData.data.source_branch || '无' }}
+      </el-descriptions-item>
+      <el-descriptions-item label="其他分支修复情况">
+        <div v-for="item in analyzeData.data.other_branches" :key="item.branch">
+          <span>{{ item.branch }}:</span>
+          <el-tag
+            :type="item.status === 'true' ? 'success' : 'danger'" size="small">
+            {{ item.status === 'true' ? '已修复' : '未修复' }}
+          </el-tag>
+        </div>
       </el-descriptions-item>
       <!-- <el-descriptions-item label="元信息">
         {{ analyzeData.data.analysis_meta }}
@@ -28,27 +41,27 @@
         {{ analyzeData.data.analysis_meta?.version || '无' }}
       </el-descriptions-item>
       <el-descriptions-item label="修复方案">
-        {{ analyzeData.data.analysis_meta?.raw?.修复方案 || '无' }}
+        {{ analyzeData.data.analysis_meta?.raw?.fix_plan || '无' }}
       </el-descriptions-item>
       <el-descriptions-item label="根本原因">
-        {{ analyzeData.data.analysis_meta?.raw?.根本原因 || '无' }}
+        {{ analyzeData.data.analysis_meta?.raw?.root_cause || '无' }}
       </el-descriptions-item>
       <el-descriptions-item label="关联的CVE">
-        {{ analyzeData.data.analysis_meta?.raw?.关联的CVE || '无' }}
+        {{ analyzeData.data.analysis_meta?.raw?.related_cve || '无' }}
       </el-descriptions-item>
       <el-descriptions-item label="漏洞类型">
-        {{ analyzeData.data.analysis_meta?.raw?.漏洞类型 || '无' }}
+        {{ analyzeData.data.analysis_meta?.raw?.vulnerability_type || '无' }}
       </el-descriptions-item>
-      <el-descriptions-item label="补丁类型">
+      <!-- <el-descriptions-item label="补丁类型">
         {{ analyzeData.data.analysis_meta?.raw?.补丁类型 || '无' }}
-      </el-descriptions-item>
+      </el-descriptions-item> -->
     </el-descriptions>
   </div>
 </template>
 
 <script setup>
 import { computed, defineProps } from 'vue'
-import { ElDescriptions, ElDescriptionsItem, ElTag} from 'element-plus'
+import { ElDescriptions, ElDescriptionsItem, ElTag } from 'element-plus'
 import { useDateFormat } from '@vueuse/core'
 
 // 数据源
@@ -152,6 +165,7 @@ const formattedMeta = computed(() => {
 <style scoped>
 /* 在当前作用域的根容器上定义CSS变量 */
 .current-scope {
-  --el-text-color-regular: #ffffff; /* 白色 */
+  --el-text-color-regular: #ffffff;
+  /* 白色 */
 }
 </style>

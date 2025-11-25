@@ -248,12 +248,12 @@ onUnmounted(() => {
             </el-table-column>
 
             <!-- 安全状态列 -->
-            <el-table-column label="安全状态" align="center">
+            <el-table-column label="提交类型" align="center">
                 <template #default="scope">
                     <el-tag
-                        :type="scope.row.is_security === true ? 'success' : scope.row.is_security === false ? 'danger' : 'warning'"
+                        :type="scope.row.is_security === true ? 'success' : scope.row.is_security === false ? 'info' : 'warning'"
                         class="status-tag" size="large">
-                        {{ scope.row.is_security === true ? '安全' : scope.row.is_security === false ? '危险' : '未知' }}
+                        {{ scope.row.is_security === true ? '安全补丁' : scope.row.is_security === false ? '非安全补丁' : '未知' }}
                     </el-tag>
                 </template>
             </el-table-column>
