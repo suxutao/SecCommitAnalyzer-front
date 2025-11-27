@@ -17,7 +17,7 @@ const props = defineProps({
     validator: (val) => val.length > 0 && val.every(item => item.date && typeof item.scans === 'number')
   },
   // 图表高度（核心：通过此属性调整高度）
-  height: { type: Number, default: 200 },
+  height: { type: Number, default: 300 },
   lineColor: { type: String, default: '#42b983' },
   // 新增：x轴标签名称（如“日期”）
   xAxisLabel: { type: String, default: '日期' },

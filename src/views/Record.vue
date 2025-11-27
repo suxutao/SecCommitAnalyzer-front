@@ -23,8 +23,8 @@
                         @change="loadData">
                         <el-option label="所有补丁" value="all" />
                         <el-option label="安全补丁" value="true" />
-                        <el-option label="未知补丁" value="unknown" />
                         <el-option label="非安全补丁" value="false" />
+                        <el-option label="未知" value="unknown" />
                     </el-select>
                 </div>
             </div>
@@ -95,7 +95,7 @@
             <el-table-column label="提交类型" width="120" align="center">
                 <template #default="scope">
                     <el-tag
-                        :type="scope.row.is_security === true ? 'success' : scope.row.is_security === false ? 'danger' : 'warning'"
+                        :type="scope.row.is_security === true ? 'success' : scope.row.is_security === false ? 'info' : 'warning'"
                         class="status-tag" size="large">
                         {{ scope.row.is_security === true ? '安全补丁' : scope.row.is_security === false ? '非安全补丁' : '未知' }}
                     </el-tag>

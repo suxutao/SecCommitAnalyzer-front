@@ -63,7 +63,7 @@ const initChart = () => {
     
     series: [{
       type: 'pie',
-      radius: '70%',
+      radius: '60%',
       data: seriesData,
       // 扇区样式（深色背景下增加边框）
       itemStyle: {
@@ -77,7 +77,7 @@ const initChart = () => {
       // 高亮状态（hover时）
       emphasis: {
         label: {
-          show: true,
+          show: false,
           color: '#fff', // 高亮文字白色
           fontSize: 14,
           fontWeight: 'bold'
@@ -118,6 +118,6 @@ watch(() => props.chartData, initChart, { deep: true })
 
 .chart-wrapper {
   width: 100%;
-  height: 200px;
+  height: 400px;
 }
 </style>

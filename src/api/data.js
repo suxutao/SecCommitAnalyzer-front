@@ -29,3 +29,11 @@ export const pageQuery = (data) => {
 export const analyze = (sha) => {
     return request.post(`/commits/${sha}/analyze`)
 }
+
+export const getStatVulnerabilities = () => {
+    return request.get('/stats/vulnerabilities')
+}
+
+export const getStatPatchTypes = () => {
+    return request.get('/stats/patch_types')
+}

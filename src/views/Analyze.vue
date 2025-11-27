@@ -12,17 +12,22 @@
         {{ analyzeData.data.cwe }}
       </el-descriptions-item>
       <el-descriptions-item label="提交类型">
-        <el-tag
+        <!-- <el-tag
           :type="analyzeData.data.analysis_meta?.raw?.patch_type === null ? 'warning' : analyzeData.data.analysis_meta?.raw?.patch_type === 'security' ? 'success' : 'info'"
           class="status-tag" size="large">
           {{ analyzeData.data.analysis_meta?.raw?.patch_type === null ? '未知补丁' :
             analyzeData.data.analysis_meta?.raw?.patch_type === 'security' ? '安全补丁' : '非安全补丁' }}
+        </el-tag> -->
+        <el-tag
+          :type="analyzeData.data.is_security === true ? 'success' : analyzeData.data.is_security === false ? 'info' : 'warning'"
+          class="status-tag" size="large">
+          {{ analyzeData.data.is_security === true ? '安全补丁' : analyzeData.data.is_security === false ? '非安全补丁' : '未知' }}
         </el-tag>
       </el-descriptions-item>
       <el-descriptions-item label="分支来源">
         {{ analyzeData.data.source_branch || '无' }}
       </el-descriptions-item>
-      <el-descriptions-item label="其他分支修复情况">
+      <el-descriptions-item label="其他分支修复情况" v-if="analyzeData.data.other_branches.length > 0">
         <div v-for="item in analyzeData.data.other_branches" :key="item.branch">
           <span>{{ item.branch }}:</span>
           <el-tag

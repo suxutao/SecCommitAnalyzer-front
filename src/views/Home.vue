@@ -5,7 +5,7 @@ import LineChart from '../components/LineChart.vue'
 import { useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus'
 import { useStats } from '../stores/useStats.js'
-import { test, pageQuery } from '@/api/data.js'
+import { test, pageQuery, getStatVulnerabilities, getStatPatchTypes } from '@/api/data.js'
 import { useIntervalFn } from '@vueuse/core'
 import { useDateFormat } from '@vueuse/core';
 
@@ -25,13 +25,23 @@ const stats = useStats();
 const scanActivities = ref([])
 
 // 漏洞类型分布
-const vulnerabilityDistribution = ref([
-    { type: '缓冲区溢出', count: 12, color: '#ef4444' },
-    { type: '空指针', count: 8, color: '#f97316' },
-    { type: '整数溢出', count: 5, color: '#eab308' },
-    { type: '死锁', count: 3, color: '#84cc16' },
-    { type: '其他', count: 7, color: '#64748b' }
-])
+// const vulnerabilityDistribution = ref([
+//     { type: '缓冲区溢出', count: 12, color: '#ef4444' },
+//     { type: '空指针', count: 8, color: '#f97316' },
+//     { type: '整数溢出', count: 5, color: '#eab308' },
+//     { type: '死锁', count: 3, color: '#84cc16' },
+//     { type: '其他', count: 7, color: '#64748b' }
+// ])
+const vulnerabilityDistribution = ref([])
+
+// 补丁类型分布
+// const patchTypeDistribution = ref([
+//     { type: '功能新增', count: 12, color: '#ef4444' },
+//     { type: '性能优化', count: 8, color: '#f97316' },
+//     { type: '安全修复', count: 5, color: '#eab308' },
+//     { type: '其他', count: 7, color: '#64748b' }
+// ])
+const patchTypeDistribution = ref([])
 
 //扫描数据
 const scanData = ref([
@@ -85,7 +95,19 @@ const handleTestConnection = async () => {
 }
 
 // 更新scanData中的date为过去7天
-onMounted(() => {
+onMounted(async () => {
+    const vulnerabilities = await getStatVulnerabilities()
+    const patchTypes = await getStatPatchTypes()
+    // vulnerabilities.items.forEach(item => {
+    //     delete item.color;
+    // })
+    stats.value.vulnerabilities = vulnerabilities.total
+    vulnerabilityDistribution.value = vulnerabilities.items
+    patchTypeDistribution.value = patchTypes.items
+    
+    console.log(vulnerabilityDistribution.value);
+    console.log(patchTypeDistribution.value);
+    
     const past7Days = generatePast7Days();
     // 遍历scanData，替换每个对象的date
     scanData.value.forEach((item, index) => {
@@ -188,6 +210,32 @@ onUnmounted(() => {
         <el-card class="chart-card">
             <template #header>
                 <div class="chart-header">
+                    <span>补丁类型分布</span>
+                </div>
+            </template>
+            <div class="chart-content">
+                <div class="vulnerability-list">
+                    <div v-for="(item, index) in patchTypeDistribution" :key="index" class="vulnerability-item">
+                        <div class="vuln-type">
+                            <div class="color-indicator" :style="{ backgroundColor: item.color }"></div>
+                            <span>{{ item.type }}</span>
+                        </div>
+                        <div class="vuln-count">{{ item.count }}个</div>
+                    </div>
+                </div>
+                <div class="chart-placeholder">
+                    <i class="fas fa-chart-pie"></i>
+                    <SimplePieChart :chart-data="patchTypeDistribution" />
+                </div>
+            </div>
+        </el-card>
+    </div>
+
+    <!-- 最近扫描活动 -->
+    <div class="charts-container">
+        <el-card class="chart-card">
+            <template #header>
+                <div class="chart-header">
                     <span>扫描数量图</span>
                 </div>
             </template>
@@ -196,69 +244,69 @@ onUnmounted(() => {
                 <LineChart :data="scanData" />
             </div>
         </el-card>
+        <el-card class="activity-card">
+            <template #header>
+                <div class="activity-header">
+                    <span>最近扫描活动</span>
+                    <el-button type="primary" text @click="goToRecord">查看全部</el-button>
+                </div>
+            </template>
+            <el-table :data="scanActivities" class="dark-table commits-table" style="width: 100%;margin: auto;">
+                <!-- ID列 -->
+                <el-table-column label="ID" width="100">
+                    <template #default="scope">
+                        <div class="commit-id">
+                            <i class="fas fa-code-commit"></i>
+                            {{ scope.row.sha.substring(0, 8) }}
+                        </div>
+                    </template>
+                </el-table-column>
+
+                <!-- 日期列 -->
+                <el-table-column label="日期">
+                    <template #default="scope">
+                        <div class="commit-date">
+                            {{ useDateFormat(scope.row.date, 'YYYY-MM-DD HH:mm:ss', { timeZone: 'UTC' }).value }}
+                        </div>
+                    </template>
+                </el-table-column>
+
+                <!-- 分支和消息 -->
+                <el-table-column label="仓库信息" min-width="150">
+                    <template #default="scope">
+                        <div class="commit-info">
+                            <div class="commit-message">
+                                {{ scope.row.repo_name }}
+                            </div>
+                            <div class="commit-meta">
+                                <el-tag size="small" effect="plain" class="branch-tag">
+                                    <i class="fas fa-code-branch"></i>
+                                    {{ scope.row.repo_owner }}
+                                </el-tag>
+                                <span class="commit-author">
+                                    <i class="fas fa-user"></i>
+                                    {{ scope.row.author }}
+                                </span>
+                            </div>
+                        </div>
+                    </template>
+                </el-table-column>
+
+                <!-- 安全状态列 -->
+                <el-table-column label="提交类型" align="center">
+                    <template #default="scope">
+                        <el-tag
+                            :type="scope.row.is_security === true ? 'success' : scope.row.is_security === false ? 'info' : 'warning'"
+                            class="status-tag" size="large">
+                            {{ scope.row.is_security === true ? '安全补丁' : scope.row.is_security === false ? '非安全补丁' :
+                                '未知' }}
+                        </el-tag>
+                    </template>
+                </el-table-column>
+            </el-table>
+        </el-card>
     </div>
 
-    <!-- 最近扫描活动 -->
-    <el-card class="activity-card">
-        <template #header>
-            <div class="activity-header">
-                <span>最近扫描活动</span>
-                <el-button type="primary" text @click="goToRecord">查看全部</el-button>
-            </div>
-        </template>
-        <el-table :data="scanActivities" class="dark-table commits-table" style="width: 50%;margin: auto;">
-            <!-- ID列 -->
-            <el-table-column label="ID" width="100">
-                <template #default="scope">
-                    <div class="commit-id">
-                        <i class="fas fa-code-commit"></i>
-                        {{ scope.row.sha.substring(0, 8) }}
-                    </div>
-                </template>
-            </el-table-column>
-
-            <!-- 日期列 -->
-            <el-table-column label="日期">
-                <template #default="scope">
-                    <div class="commit-date">
-                        {{ useDateFormat(scope.row.date, 'YYYY-MM-DD HH:mm:ss', { timeZone: 'UTC' }).value }}
-                    </div>
-                </template>
-            </el-table-column>
-
-            <!-- 分支和消息 -->
-            <el-table-column label="仓库信息" min-width="150">
-                <template #default="scope">
-                    <div class="commit-info">
-                        <div class="commit-message">
-                            {{ scope.row.repo_name }}
-                        </div>
-                        <div class="commit-meta">
-                            <el-tag size="small" effect="plain" class="branch-tag">
-                                <i class="fas fa-code-branch"></i>
-                                {{ scope.row.repo_owner }}
-                            </el-tag>
-                            <span class="commit-author">
-                                <i class="fas fa-user"></i>
-                                {{ scope.row.author }}
-                            </span>
-                        </div>
-                    </div>
-                </template>
-            </el-table-column>
-
-            <!-- 安全状态列 -->
-            <el-table-column label="提交类型" align="center">
-                <template #default="scope">
-                    <el-tag
-                        :type="scope.row.is_security === true ? 'success' : scope.row.is_security === false ? 'info' : 'warning'"
-                        class="status-tag" size="large">
-                        {{ scope.row.is_security === true ? '安全补丁' : scope.row.is_security === false ? '非安全补丁' : '未知' }}
-                    </el-tag>
-                </template>
-            </el-table-column>
-        </el-table>
-    </el-card>
 </template>
 
 <style lang="scss" scoped>
@@ -461,7 +509,7 @@ onUnmounted(() => {
 
         .chart-content {
             display: flex;
-            height: 200px;
+            height: 450px;
         }
 
         .vulnerability-list {

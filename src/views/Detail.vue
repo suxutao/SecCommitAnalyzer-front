@@ -21,7 +21,7 @@
         </el-link></el-descriptions-item>
       <el-descriptions-item label="提交类型">
         <el-tag
-          :type="commitData.data.is_security === true ? 'success' : commitData.data.is_security === false ? 'danger' : 'warning'"
+          :type="commitData.data.is_security === true ? 'success' : commitData.data.is_security === false ? 'info' : 'warning'"
           class="status-tag" size="large">
           {{ commitData.data.is_security === true ? '安全补丁' : commitData.data.is_security === false ? '非安全补丁' : '未知' }}
         </el-tag>
