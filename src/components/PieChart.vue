@@ -63,7 +63,7 @@ const initChart = () => {
     
     series: [{
       type: 'pie',
-      radius: '60%',
+      radius: '55%',
       data: seriesData,
       // 扇区样式（深色背景下增加边框）
       itemStyle: {
@@ -118,6 +118,6 @@ watch(() => props.chartData, initChart, { deep: true })
 
 .chart-wrapper {
   width: 100%;
-  height: 400px;
+  height: 450px;
 }
 </style>
