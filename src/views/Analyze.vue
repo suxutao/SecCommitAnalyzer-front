@@ -27,7 +27,7 @@
       <el-descriptions-item label="分支来源">
         {{ analyzeData.data.source_branch || '无' }}
       </el-descriptions-item>
-      <el-descriptions-item label="其他分支修复情况" v-if="analyzeData.data.other_branches.length > 0">
+      <el-descriptions-item label="其他分支修复情况" v-if="analyzeData.data.other_branches?.length > 0">
         <div v-for="item in analyzeData.data.other_branches" :key="item.branch">
           <span>{{ item.branch }}:</span>
           <el-tag
