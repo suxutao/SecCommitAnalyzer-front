@@ -5,21 +5,23 @@ import LineChart from '../components/LineChart.vue'
 import { useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus'
 import { useStats } from '../stores/useStats.js'
+import { usePieData} from '../stores/pieData.js'
 import { test, pageQuery, getStatVulnerabilities, getStatPatchTypes } from '@/api/data.js'
 import { useIntervalFn } from '@vueuse/core'
 import { useDateFormat } from '@vueuse/core';
 
-
 // 获取路由实例
 const router = useRouter();
 
-// 定义跳转函数：通过路由实例跳转到/record
+// 定义跳转函数：通过路由实例跳转到/record  
 const goToRecord = () => {
     router.push('/record'); // 编程式导航，跳转到目标路由
 };
 
 // 统计数据
 const stats = useStats();
+// 饼图数据
+const pieData = usePieData();
 
 // 扫描活动数据
 const scanActivities = ref([])
@@ -96,14 +98,21 @@ const handleTestConnection = async () => {
 
 // 更新scanData中的date为过去7天
 onMounted(async () => {
-    const vulnerabilities = await getStatVulnerabilities()
-    const patchTypes = await getStatPatchTypes()
-    // vulnerabilities.items.forEach(item => {
-    //     delete item.color;
-    // })
-    stats.value.vulnerabilities = vulnerabilities.total
-    vulnerabilityDistribution.value = vulnerabilities.items
-    patchTypeDistribution.value = patchTypes.items
+    if (pieData.value.total === 0) {
+        try {
+            const vulnerabilities = await getStatVulnerabilities()
+            const patchTypes = await getStatPatchTypes()
+            pieData.value.array1 = vulnerabilities.items
+            pieData.value.array2 = patchTypes.items
+            pieData.value.total = vulnerabilities.total
+        } catch (error) {
+            ElMessage.error('获取统计数据失败')
+        }
+    }
+    stats.value.vulnerabilities = pieData.value.total
+    vulnerabilityDistribution.value = pieData.value.array1
+    patchTypeDistribution.value = pieData.value.array2
+    stats.value.securityRate = 58.8
     
     console.log(vulnerabilityDistribution.value);
     console.log(patchTypeDistribution.value);
