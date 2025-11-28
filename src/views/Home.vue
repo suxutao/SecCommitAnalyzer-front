@@ -103,6 +103,7 @@ onMounted(async () => {
             const vulnerabilities = await getStatVulnerabilities()
             const patchTypes = await getStatPatchTypes()
             pieData.value.array1 = vulnerabilities.items
+            pieData.value.array1.push(pieData.value.array1.shift());
             pieData.value.array2 = patchTypes.items
             pieData.value.total = vulnerabilities.total
         } catch (error) {
